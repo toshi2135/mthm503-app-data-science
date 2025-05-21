@@ -80,6 +80,12 @@
       "Maintainer": "Kevin Ushey <kevin@rstudio.com>",
       "Repository": "CRAN"
     },
+    "targets": {
+      "Package": "targets",
+      "Version": "1.11.3",
+      "Source": "Repository",
+      "Repository": "CRAN"
+    },
     "testthat": {
       "Package": "testthat",
       "Version": "3.2.3",
