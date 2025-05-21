@@ -1,3 +1,4 @@
+source("R/functions.R")
 test_that("mocked data is returned with CI", {
   withr::with_envvar(c(CI = "true"), {
     df <- load_data()
