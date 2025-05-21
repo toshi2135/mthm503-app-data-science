@@ -4,7 +4,7 @@ load_data <- function() {
 
   if (is_ci) {
     source(here::here("mock_data", "mock_df.R"))
-    df <- mock_df
+    df <- mock_data()
   } else {
     con <- DBI::dbConnect(
       RPostgres::Postgres(),
