@@ -1,4 +1,5 @@
 load_data <- function() {
+    print(Sys.getenv("PGRDATABASE"))
   is_ci <- Sys.getenv("CI") == "true"
 
   if (is_ci) {
@@ -11,10 +12,9 @@ load_data <- function() {
       host = Sys.getenv("PGRHOST"),
       user = Sys.getenv("PGRUSER"),
       password = Sys.getenv("PGRPASSWORD"),
-      port = Sys.getenv("PGRPORT"),
-      sslmode = "require"
+      port = Sys.getenv("PGRPORT")
     )
-    df <- DBI::dbReadTable(con, "dft.stats19_accidents")
+    df <- DBI::dbGetQuery(con, "SELECT casualty_severity FROM dft.stats19_casualties")
     DBI::dbDisconnect(con)
     }
 
