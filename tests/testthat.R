@@ -1,3 +1,3 @@
 library(testthat)
 library(here)
-test_check("mthm503")
+test_dir("tests")
