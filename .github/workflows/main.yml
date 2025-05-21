@@ -25,9 +25,15 @@ jobs:
           Rscript -e "install.packages(c('targets', 'testthat', 'RPostgres', 'dplyr', 'here', 'withr', 'DBI', 'lintr', 'tidyr'))"
 
       - name: Check for lints
-        run  |
-          Rscript -e "lints <- lintr::lint_dir('R'); if(length(lints) > 0) { print(lints); quit(status = 1) } else { message('No lints found.') }"
-
+        run: |
+          Rscript -e "lints <- lintr::lint_dir('R'); \
+            if (length(lints) > 0) { \
+              print(lints); \
+              quit(status = 1); \
+            } else { \
+              message('No lints found.'); \
+            }"
+                    
       - name: Run tests
         run: |
           Rscript -e "testthat::test_dir('tests')"
