@@ -1,0 +1,44 @@
+---
+title: "Standard Report"
+author: "Paul Hewson"
+date: "2025-05-21"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+ 
+Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+
+```{r load_data_and_packages, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+library(dplyr)
+library(ggplot2)
+source(here::here("R", "load_data.R"))
+data <- load_data()
+```
+
+## Road casualty data
+
+We can present a visual display of the number of road casualties as follows:
+
+```{r pressure, echo=FALSE}
+data %>%
+  mutate(casualty_severity = as.factor(casualty_severity)) %>%
+  group_by(casualty_severity) %>%
+  summarise(N = n()) %>%
+  ggplot(aes(x = casualty_severity, y = N, 
+             fill = casualty_severity)) +
+  geom_bar(stat = "identity") + 
+  theme_bw() + 
+  xlab("Severity of Casualty") + 
+  ylab("Number of reported and sub-sampled casualties") + 
+  labs(title = "Number of reported pedestrian road casualties in 2023",
+       subtitle = "All fatalities, 10% of serious and 1% of slight casualties",
+       caption = "Source: STATs19, data.gov.uk")
+```
+
+Do note that there has been a lot of sub-sampling. All fatally injured road pedestrian casualties are included in the data, but 10% of serious and 1% of slight casualties were selected at random.

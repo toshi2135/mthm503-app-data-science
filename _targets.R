@@ -1,4 +1,5 @@
 library(targets)
+library(tarchetypes)
 library(here)
 
 source(here("R", "functions.R"))
@@ -16,5 +17,9 @@ list(
   tar_target(
     summary_data,
     summarise_data(raw_data)
+  ),
+  tar_render(
+    report,
+    "vignettes/Report.Rmd"
   )
 )
