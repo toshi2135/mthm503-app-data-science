@@ -21,6 +21,12 @@
       "Source": "Repository",
       "Repository": "CRAN"
     },
+    "igraph": {
+      "Package": "igraph",
+      "Version": "2.1.4",
+      "Source": "Repository",
+      "Repository": "CRAN"
+    },
     "lintr": {
       "Package": "lintr",
       "Version": "3.2.0",
