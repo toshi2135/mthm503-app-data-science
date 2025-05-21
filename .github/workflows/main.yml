@@ -15,7 +15,7 @@ jobs:
       - name: Cache R packages
         uses: actions/cache@v3
         with:
-          path: ~/.cache/R/cran
+          path: ~/.cache/R
           key: ${{ runner.os }}-r-${{ hashFiles('**/*.R', '**/*.Rproj') }}
           restore-keys: |
             ${{ runner.os }}-r-
