@@ -15,10 +15,10 @@ Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word docu
 
 
 ```{r load_data_and_packages, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+library(targets)
+tar_load(summary_data)
 library(dplyr)
 library(ggplot2)
-source(here::here("R", "load_data.R"))
-data <- load_data()
 ```
 
 ## Road casualty data
@@ -26,11 +26,8 @@ data <- load_data()
 We can present a visual display of the number of road casualties as follows:
 
 ```{r pressure, echo=FALSE}
-data %>%
-  mutate(casualty_severity = as.factor(casualty_severity)) %>%
-  group_by(casualty_severity) %>%
-  summarise(N = n()) %>%
-  ggplot(aes(x = casualty_severity, y = N, 
+summary_data %>%
+  ggplot(aes(x = casualty_severity, y = Casualties, 
              fill = casualty_severity)) +
   geom_bar(stat = "identity") + 
   theme_bw() + 
