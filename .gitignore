@@ -50,3 +50,5 @@ rsconnect/
 
 # targets cache
 _targets/
+
+renv/library/
