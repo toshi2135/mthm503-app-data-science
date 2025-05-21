@@ -80,6 +80,12 @@
       "Maintainer": "Kevin Ushey <kevin@rstudio.com>",
       "Repository": "CRAN"
     },
+    "testthat": {
+      "Package": "testthat",
+      "Version": "3.2.3",
+      "Source": "Repository",
+      "Repository": "CRAN"
+    },
     "tidyverse": {
       "Package": "tidyverse",
       "Version": "2.0.0",
