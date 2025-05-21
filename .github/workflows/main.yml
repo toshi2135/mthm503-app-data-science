@@ -26,7 +26,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          Rscript -e "install.packages("renv"); renv::restore()"
+          Rscript -e "install.packages("renv")"
+          Rscript -e "renv::restore()"
 
       - name: Check for lints
         run: |
