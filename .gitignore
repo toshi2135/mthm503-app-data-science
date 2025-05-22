@@ -51,4 +51,6 @@ rsconnect/
 # targets cache
 _targets/
 
+# Renv files
 renv/library/
+renv_install.log
