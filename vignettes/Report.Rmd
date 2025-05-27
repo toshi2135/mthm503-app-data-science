@@ -12,6 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ## R Markdown
  
 Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+You need a working pandoc installation on your computer (this should be taken care of if you have an RStudio installation)
 
 
 ```{r load_data_and_packages, echo=FALSE, results='hide', message=FALSE, warning=FALSE}

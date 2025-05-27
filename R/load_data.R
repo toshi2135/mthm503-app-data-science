@@ -14,8 +14,8 @@ load_data <- function() {
       port = Sys.getenv("PGRPORT")
     )
     sql_text <-
-      "SELECT casualty_severity
-       FROM dft.stats19_casualties"
+      "SELECT casualty_severity, sex_of_casualty, pedestrian_location
+       FROM stats19_casualties"
     df <- DBI::dbGetQuery(con, sql_text)
     DBI::dbDisconnect(con)
   }

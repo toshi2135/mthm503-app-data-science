@@ -25,6 +25,7 @@ let
       fribidi
       pkg-config
       postgresql
+      pandoc
       R;
 
       # Import -dev packages needed for compiling packages like systemfonts, stringi etc
