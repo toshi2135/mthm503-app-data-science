@@ -52,6 +52,8 @@ shellHook = ''
 
   export LANG=en_US.UTF-8
   export LC_ALL=en_US.UTF-8
+  export DATASTORE="$HOME/DATA"
+  export OFFLOC="$HOME/official_stats"
 
   echo "🔧 Checking pkg-config availability..."
   pkg-config --cflags fontconfig || echo "fontconfig not found"
