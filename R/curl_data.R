@@ -1,12 +1,12 @@
 library(httr2)
 library(jsonlite)
 
-ANON_KEY <- TO BE ADDED
-PROJECT_ID <- TO BE ADDED
+project_id <- "<TO BE ADDED>"
+anon_key <- "<ANON_KEY>"
 
 # Supabase details
 supabase_url <- paste("https://", PROJECT_ID, ".supabase.co", sep = "")
-anon_key <- ANON_KEY
+
 
 # Select table
 table <- "stats19_accidents"
@@ -32,7 +32,8 @@ total_count <- as.numeric(sub(".*/", "", count_header))
 
 print(paste("Total rows:", total_count))
 
-# Partial download of table (can only downoad 1000 rows at a time, using 0 based indexing)
+# Partial download of table (can only downoad 1000 rows at a time,
+# Note, uses 0 based indexing)
 req <- request(paste0(supabase_url, "/rest/v1/", table)) %>%
   req_headers(
     `apikey` = anon_key,
