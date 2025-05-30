@@ -21,6 +21,9 @@
 # RStudio files
 .Rproj.user/
 
+# html in parent folder
+*.html
+
 # produced vignettes
 vignettes/*.html
 vignettes/*.pdf
