@@ -35,5 +35,9 @@ if (Sys.info()[["sysname"]] == "Linux" && grepl("debian", tolower(system("lsb_re
   install_if_missing("systemfonts")
 }
 
+if (Sys.info()[["sysname"]] == "Windows") {
+  options(pkgType = "binary")
+}
+
 # Restore all other packages
 renv::restore()
