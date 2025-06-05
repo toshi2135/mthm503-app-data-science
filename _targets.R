@@ -18,6 +18,10 @@ list(
     summary_data,
     summarise_data(raw_data)
   ),
+  tar_target(
+    summary_casualty_sex,
+    summarise_casualty_sex(raw_data)
+  ),
   tar_render(
     report,
     "vignettes/Report.Rmd"

@@ -63,6 +63,12 @@
       "Source": "Repository",
       "Repository": "CRAN"
     },
+    "mdsr": {
+      "Package": "mdsr",
+      "Version": "0.2.8",
+      "Source": "Repository",
+      "Repository": "CRAN"
+    },
     "mime": {
       "Package": "mime",
       "Version": "0.13",

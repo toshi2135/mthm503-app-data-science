@@ -7,3 +7,10 @@ summarise_data <- function(df) {
     dplyr::group_by(casualty_severity) %>%
     dplyr::summarise(Casualties = n())
 }
+
+summarise_casualty_sex <- function(df) {
+  df %>%
+    dplyr::mutate(sex_of_casualty = as.factor(sex_of_casualty)) %>% # nolint
+    dplyr::group_by(sex_of_casualty) %>%
+    dplyr::summarise(Casualties = n())
+}
