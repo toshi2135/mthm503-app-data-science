@@ -16,8 +16,10 @@ You need a working pandoc installation on your computer (this should be taken ca
 
 
 ```{r load_data_and_packages, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
-library(targets)
-tar_load(summary_data)
+if (file.exists("../_targets")) {
+  targets::tar_config_set("store" = "../_targets")
+  }
+targets::tar_load(summary_data)
 library(dplyr)
 library(ggplot2)
 ```
