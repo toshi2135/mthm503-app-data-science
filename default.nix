@@ -26,6 +26,8 @@ let
       pkg-config
       postgresql
       pandoc
+      texliveFull
+      emacs
       R;
 
       # Import -dev packages needed for compiling packages like systemfonts, stringi etc
