@@ -1,0 +1,120 @@
+---
+title: "Applications of Data Science and Statistics"
+author: "Paul Hewson"
+format: revealjs
+editor: visual
+self-contained: true
+---
+
+## Review
+
+-   Three technical topics
+  - Supervised classification
+  - Unsupervised  classification
+  - Regression
+- One overarching theme: working in a reproducible manner
+
+## Reproducible research
+
+We have used the following tools:
+
+- `PostgreSQL` (now available entirely within the University network). Authenticate via secrets in a `.Renviron` file
+- Version control (`git` and GitHub) - remember to apply for a student account
+- Dependency Management (`renv`)
+- Workflow management (`targets`)
+- Good coding practice (unit tests)
+
+## In class test: Assertion–Reason
+
+A type of critical thinking test that asks you to evaluate two related statements:
+
+-    Assertion: A statement that claims something is true.
+-    Reason: A second statement that explains why the assertion might be true.
+
+Your job is to decide:
+
+-    Whether each statement is true or false
+-    Whether the reason correctly explains the assertion
+
+## How It Works
+
+You’ll usually be given five answer choices like this:
+
+
+A.	Both the assertion and the reason are true, and the reason explains the assertion.
+B.	Both the assertion and the reason are true, but the reason does not explain the assertion.
+C.	The assertion is true, but the reason is false.
+D.	The assertion is false, but the reason is true.
+E.	Both the assertion and the reason are false.
+
+
+## Example
+
+*Assertion*: Plants appear green. 
+
+*Reason*: Chlorophyll reflects green light.
+
+The correct answer is A
+
+-    The assertion is true: plants do appear green.
+
+-    The reason is true: chlorophyll reflects green light.
+
+-    And the reason explains the assertion.
+
+## Why It’s Useful
+
+This format tests more than just memorization—it checks:
+
+-    Your understanding of facts
+
+-    Your ability to connect cause and effect
+
+-    Your skill in evaluating logical relationships
+
+## Practice questions
+
+- There have been practice questions each week in the ELE site
+- I can write a mock test if you want further practice
+- I strongly suggest you practice before taking the real test
+
+## The In class test
+
+- Assumes you have completed the in class tutorials (these are set in the ELE site)
+- Uses this assertion-reason question style
+
+## The written coursework
+
+- Sets three tasks, one for each topic area
+- Gives credit for some use of reproducible research principles. Read the marking criteria carefully. You don't have to be fully exhaustive here. You are meant to demonstrate that you can apply the principles.
+- Allows you to ask for *formative* feedback.
+
+## Formative feedback (no grades)
+
+- Helps you identify what you're doing well and where you can improve
+- Gives you specific, actionable suggestions to develop your skills
+- Encourages reflection and deeper thinking—not just right or wrong answers
+- Supports your learning progress
+- Opens a dialogue about your learning
+- Safe space to experiment without pressure of grades
+
+## To get formative feedback
+
+- Create a pull request on GitHub
+- If you want any help with doing that, just ask
+
+## Assessment: The bridge between teaching and learning
+
+
+- Helps you identify what matters most and where to direct your effort.
+- Uncovers what you truly grasp—and what they only think you do.
+- Guides improvement
+- Promotes dialogue
+- Encourages you to reflect on how you learn, not just what you learn.
+
+
+## Note: "Promotes dialogue"
+
+- One method of dialog: send me a pull request
+- Another method: post in the discussion forum for the module
+- Only for individual queries, email: `p.hewson2@exeter.ac.uk`

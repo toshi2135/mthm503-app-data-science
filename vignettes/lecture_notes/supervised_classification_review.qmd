@@ -1,0 +1,219 @@
+---
+title: "Supervised classification"
+author: "Paul Hewson"
+format: revealjs
+self-contained: true
+editor: visual
+---
+
+## Reflecting on Supervised Classification
+
+::: {style="font-size: 30px;"}
+-   Chapter 11 applies a range of methods to the same dataset
+-   In reality, different problems (data sets) suit different classifiers
+-   You should build up your own summary of this
+-   My very brief thoughts, as a starter, are included here. Things to think about include:
+    -   What kind of data can a classifer deal with (quantitative/qualitative, missing)
+    -   What data preparation is needed (scaling, selection)
+    -   How important is train/test split
+    -   Computational requirements (speed, memory)
+:::
+
+## Summary Table
+
+::: {style="font-size: 25px;"}
+| Method                     | Advantages                                              | Disadvantages                                                              |
+|------------------|-----------------------|-------------------------------|
+| **rpart** (Decision Trees) | Interpretable, Handles Non-Linearity, Feature Selection | Overfitting, Instability, Limited Performance                              |
+| **Random Forests**         | High Accuracy, Handles Missing Data, Feature Importance | Computationally Expensive, Less Interpretability, High Memory Usage        |
+| **kNN**                    | Simple, No Training Phase, Good for Small Data          | Slow for Large Data, Sensitive to Noise, Requires Scaling                  |
+| **Naïve Bayes**            | Fast, Handles Missing Data, Good for Text               | Independence Assumption, Limited Expressiveness, Needs Well-Formatted Data |
+| **Neural Networks**        | Handles Complex Patterns, Scalable, Feature Learning    | Computationally Intensive, Black Box, Needs Large Data                     |
+:::
+
+```{=html}
+<!--
+
+1.  rpart (Recursive Partitioning, Decision Trees) Implemented in R via the rpart package. 
+
+Advantages: 
+Interpretability – Produces easy-to-understand decision trees. 
+Handles Non-Linearity – Can model complex relationships without requiring transformations. Feature Selection – Automatically selects important features during tree construction. 
+
+Disadvantages: 
+Overfitting – Prone to overfitting, especially with deep trees. 
+Instability – Small changes in data can lead to drastically different trees. 
+Limited Performance – Often less accurate than ensemble methods like Random Forests.
+
+2.  Random Forests
+
+Implemented via the randomForest package.
+
+Advantages:
+High Accuracy – Reduces overfitting by averaging multiple trees.
+Handles Missing Data – Can handle missing values and categorical variables well.
+Feature Importance – Provides insights into feature importance.
+
+Disadvantages:
+Computationally Expensive – Training can be slow for large datasets.
+Less Interpretability – Harder to understand compared to a single decision tree.
+Memory Usage – Requires more memory due to multiple trees.
+
+
+3.  k-Nearest Neighbors (kNN)
+
+Implemented via the class package. Advantages:
+
+Simple & Intuitive – Easy to understand and implement.
+No Training Phase – Just stores the dataset and classifies based on neighbors.
+Works Well for Small Data – Effective when the dataset is small and well-structured.
+
+
+Disadvantages:
+
+Computationally Expensive – Slow for large datasets due to distance calculations.
+Sensitive to Noise – Outliers can significantly affect classification.
+Feature Scaling Required – Requires normalization for meaningful distance calculations.
+
+4.  Naïve Bayes
+
+Implemented via the e1071 package. Advantages:
+
+Fast & Efficient – Works well with large datasets.
+Handles Missing Data – Can handle missing values using probability estimates.
+Works Well with Text Data – Commonly used for spam filtering and sentiment analysis.
+
+Disadvantages:
+Strong Independence Assumption – Assumes features are independent, which is often unrealistic.
+Limited Expressiveness – Struggles with complex relationships between features.
+Requires Well-Formatted Data – Performance drops if features are highly correlated.
+
+5.  Neural Networks
+
+Implemented via the nnet or keras package. Advantages:
+
+Handles Complex Patterns – Can model highly non-linear relationships.
+Scalability – Works well with large datasets.
+Feature Learning – Automatically extracts relevant features.
+
+Disadvantages:
+
+Computationally Intensive – Requires significant processing power.
+Black Box Model – Hard to interpret compared to decision trees.
+Requires Large Data – Needs a lot of data to generalize well.
+-->
+```
+## **Quick Selection Guide**
+
+::: {style="font-size: 30px;"}
+| **Scenario**                              | **Best Method**        |
+|-------------------------------------------|------------------------|
+| **Interpretable model**                   | rpart (Decision Trees) |
+| **High accuracy & robustness**            | Random Forests         |
+| **Small dataset & simple patterns**       | kNN                    |
+| **Text classification (spam, sentiment)** | Naïve Bayes            |
+| **Complex patterns & large data**         | Neural Networks        |
+:::
+
+```{=html}
+<!--
+
+1.  rpart (Decision Trees) Best for:
+
+Interpretable models – When you need a clear, explainable decision-making process. Small to medium datasets – Works well when data isn’t too large. Feature selection – Automatically identifies important variables. Avoid if:
+
+You have high-dimensional data – Trees may not perform well with many features. You need high accuracy – Often outperformed by ensemble methods like Random Forests.
+
+2.  Random Forests Best for:
+
+High accuracy – Works well for complex datasets with many features. Handling missing values – Can deal with missing data better than many other methods. Feature importance analysis – Helps identify which variables matter most. Avoid if:
+
+You need interpretability – Hard to explain individual predictions. You have limited computational resources – Training can be slow for large datasets.
+
+3.  k-Nearest Neighbors (kNN) Best for:
+
+Small datasets – Works well when data is not too large. Non-linear relationships – Can capture complex patterns without needing a model. Instance-based learning – No training phase, just stores the dataset.
+
+Avoid if:
+
+You have large datasets – Slow due to distance calculations. You have high-dimensional data – Performance drops when features increase. You need robustness to noise – Sensitive to outliers.
+
+4.  Naïve Bayes Best for:
+
+Text classification – Spam filtering, sentiment analysis, etc. Fast predictions – Works well for real-time applications. Handling missing data – Uses probability estimates to deal with missing values. Avoid if:
+
+Your features are highly correlated – Assumes independence, which may not hold. You need complex decision boundaries – Struggles with intricate relationships.
+
+5.  Neural Networks Best for:
+
+Deep learning tasks – Image recognition, speech processing, etc. Large datasets – Performs well when trained on massive amounts of data. Complex relationships – Can model highly non-linear patterns. Avoid if:
+
+You need interpretability – Hard to explain why a neural network makes a decision. You have limited data – Needs a lot of examples to generalize well. You need fast training – Computationally expensive.
+-->
+```
+## Test / Train
+
+::: {style="font-size: 30px;"}
+| **Classifier**             | **Impact of Train/Test Split** | **Why?**                               |
+|--------------------|-----------------------|-----------------------------|
+| **rpart (Decision Trees)** | **High**                       | Overfits easily, needs pruning         |
+| **Random Forests**         | **Moderate**                   | Reduces overfitting via averaging      |
+| **kNN**                    | **Moderate**                   | Sensitive to data distribution         |
+| **Naïve Bayes**            | **Low to Moderate**            | Works well with small data             |
+| **Neural Networks**        | **Very High**                  | Needs large data, prone to overfitting |
+:::
+
+```{=html}
+<!--
+
+1.  rpart (Decision Trees)
+
+Test/train split is crucial because decision trees tend to overfit if trained on the entire dataset. 
+A small training set can lead to an unstable tree that doesn’t generalize well. 
+Cross-validation is often used to prune the tree and improve generalization.
+
+🔹 Impact: High – Poor train/test splits can lead to overfitting or underfitting.
+
+2. Random Forests
+
+Less sensitive to train/test splits because it averages multiple trees. 
+Overfitting is reduced due to bootstrapping (sampling with replacement). 
+Still needs a good split to ensure diverse training samples.
+
+🔹 Impact: Moderate – Less prone to overfitting than rpart, but still benefits from a good split. 
+
+3.  k-Nearest Neighbors (kNN)
+
+Test/train split matters, but not as much because kNN doesn’t "train" in the traditional sense. 
+Performance depends on data distribution – If the test set is very different from the training set, accuracy drops. 
+Stratified sampling is recommended to ensure balanced class representation.
+
+Impact: Moderate – Sensitive to data distribution but doesn’t overfit like trees. 
+
+4. Naïve Bayes
+
+Less dependent on train/test splits because it relies on probability estimates. 
+Works well even with small training sets due to its strong assumptions.
+Class imbalance can affect probability calculations, so a good split still helps.
+
+Impact: Low to Moderate – Works well with small data but benefits from balanced splits. 
+
+5. Neural Networks
+
+Test/train split is extremely important due to high risk of overfitting.
+Needs large training data to generalize well. Cross-validation and regularization (dropout, L2 penalty) help mitigate overfitting.
+
+Impact: Very High – Poor splits can lead to extreme overfitting or poor generalization.
+
+-->
+```
+## Inbalance
+
+::: {style="font-size: 30px;"}
+| **Method**                       | **Best for**                                    | **Potential Downsides**   |
+|--------------------|----------------------------|------------------------|
+| **Oversampling (SMOTE)**         | Small datasets, minority class underrepresented | Can introduce noise       |
+| **Undersampling**                | Large datasets, majority class dominates        | Loss of information       |
+| **Class Weights**                | Models like Random Forest, SVM, Neural Networks | Requires tuning           |
+| **Boosting (XGBoost, AdaBoost)** | High-performance models                         | Computationally expensive |
+:::
