@@ -31,3 +31,54 @@ Therefore, you may find yourself working as follows:
 
 The run file can be executed from the R Terminal using `./run` although sometimes windows might make you type `bash run` instead.  It is very similar to the script on GitHub actions. Locally, it will lint your files. Linting means performing a static code analysis. Occasionally this finds important errors in your code, but usually it just worries minor code formatting issues. Sometimes in the R ecosystem it's hard to keep it happy and you can type `# nolint` at the end of a line and the linter will ignore that line.   It also runs any unit tests; note that instead of loading data from a database server, there is an sqlite database with a few rows of mock data which is intended to allow some functions to be tested.  Again, a little unit testing can be a useful way of making sure your code does what you think it does.
 
+## Formative feedback
+
+To submit your work for formative feedback, you'll use a Pull Request (PR). This allows you to share your code and analysis while giving instructors visibility for feedback and review.
+
+### Step-by-Step Guide
+
+- You should have forked this repository. Click the "Fork" button at the top right of the page. This creates your own copy of the teaching repo.
+- Work in your fork Make your changes (code, report, etc.) in your own forked repo. You can create branches if you’d like, but it’s not required.
+- Create a Pull Request against this repository Once you’re ready:
+
+  1. Go to your forked repo.
+  2. Click the “Pull Request” tab → “New Pull Request”.
+  3. Select your branch on the left, and the main branch of this repo
+  4. Pick the appropriate template from the dropdown if available (e.g. classification, regression, etc.).
+  5. Use the checklist and prompts to reflect on your work. This helps us give feedback and ensures key components are included.
+  6. Submit the PR Once submitted, your instructors will be notified.
+
+### Notes
+
+- Don’t create a PR within your own repo—PRs must be opened against this repository for instructors to see them.
+
+- You can update your PR later by pushing additional commits to your branch.
+
+- If you’re unsure which template to use, ask or consult the assignment brief.
+
+```
+        +--------------------+
+        | 1. Fork the Repo   |  ←-- Student clicks "Fork"
+        +--------------------+
+                  |
+                  v
+        +--------------------+
+        | 2. Do the Work     |  ←-- Edit files, commit code, write report
+        +--------------------+
+                  |
+                  v
+        +----------------------------+
+        | 3. Open Pull Request       |
+        |    - Against original repo |
+        |    - Choose correct PR     |
+        |      template              |
+        | (classification, etc.)     |
+        +----------------------------+
+                  |
+                  v
+        +--------------------+
+        | 4. Instructors See |
+        |    and Review PR   |  ←-- Feedback, comments!
+        +--------------------+
+
+```
