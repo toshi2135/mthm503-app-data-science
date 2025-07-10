@@ -1,0 +1,770 @@
+---
+title: "Supervised and unsupervised classification"
+author: "Paul Hewson"
+format: revealjs
+slide-level: 3
+self-contained: true
+html-math-method: mathjax
+editor: visual
+---
+
+## Introduction
+
+### Supervised and Unsupervised Classification
+
+- Last week; tooling (Database, git and Github, targets, renv)
+- This week: Supervised classification; 
+- Next week unsupervised classification **in a Data Science Framework**
+- We have some data that we believe can be grouped (**Qualitative variable, factor**). Either we 
+  - know the groups (supervised classification) 
+  - or we wish to discover potential groups (unsupervised classification)
+
+### Supervised Classification
+
+-   Labeled Data: Requires a dataset where the correct output (label, category, factor) is known for each example.
+-   Training Process: The model learns from labeled examples by mapping inputs to known outputs.
+-   Examples: Classification tasks like spam detection, image recognition, and fraud detection.
+
+### Popular Algorithms:
+
+- Logistic Regression
+- Linear / Quadratic discriminant analysis
+- Support Vector Machines (SVM)
+- Decision Trees / Random Forests
+- Neural Networks
+
+### Unsupervised Classification
+
+-   Unlabeled Data: No predefined categories; the algorithm must find patterns and structure in the data.
+-   Training Process: The model identifies hidden structures, groups similar data points, or reduces dimensionality.
+
+Examples: Clustering tasks like customer segmentation, anomaly detection, and topic modeling.
+
+### Popular Algorithms:
+
+-   K-Means Clustering
+-   Hierarchical Clustering
+-   Principal Component Analysis (PCA)
+-   Autoencoders
+
+### The problem
+
+```{r loadpackages, echo = FALSE}
+library(ggplot2)
+library(gridExtra)
+library(nnet)
+library(dplyr)
+library(MASS)
+library(ggplot2)
+library(ggExtra)
+library(ISLR)
+library(ellipse)
+library(GGally)
+```
+
+```{r data_super_unsuper, echo = FALSE}
+# Set seed
+set.seed(42)
+
+# Generate synthetic data with 3 centers
+n <- 300
+centers <- matrix(c(2, 2, -2, -2, 2, -2), ncol = 2, byrow = TRUE)
+group <- sample(1:3, n, replace = TRUE)
+X <- centers[group, ] + matrix(rnorm(n * 2, sd = 1.2), ncol = 2)
+data <- data.frame(x = X[,1], y = X[,2], label = factor(group))
+
+# Supervised plot
+p1 <- ggplot() +
+  geom_point(data = data, aes(x = x, y = y, color = label), size = 2) +
+  labs(title = "Supervised Learning", color = "Label") +
+  theme_minimal()
+# Unsupervised plot
+p2 <- ggplot(data, aes(x = x, y = y)) +
+  geom_point(size = 2) +
+  labs(title = "Unsupervised Learning") +
+  theme_minimal()
+
+# Combine plots
+grid.arrange(p1, p2, ncol = 2)
+```
+
+### The solution
+
+```{r diff_super_unsuper, echo = FALSE}
+# Train supervised model
+model <- multinom(label ~ x + y, data = data, trace = FALSE)
+
+# Create a grid of values over feature space
+x_range <- seq(min(data$x) - 1, max(data$x) + 1, length.out = 200)
+y_range <- seq(min(data$y) - 1, max(data$y) + 1, length.out = 200)
+grid <- expand.grid(x = x_range, y = y_range)
+
+# Predict classes over the grid
+grid$pred <- predict(model, newdata = grid)
+
+# Unsupervised plot (k-means)
+kmeans_result <- kmeans(data[, c("x", "y")], centers = 3)
+data$cluster <- factor(kmeans_result$cluster)
+
+# Supervised plot with decision boundaries
+p1 <- ggplot() +
+  geom_tile(data = grid, aes(x = x, y = y, fill = pred), alpha = 0.3) +
+  geom_point(data = data, aes(x = x, y = y, color = label), size = 2) +
+  labs(title = "Supervised Learning with Decision Boundaries", fill = "Predicted", color = "Label") +
+  theme_minimal()
+
+p2 <- ggplot(data, aes(x = x, y = y, color = cluster)) +
+  geom_point(size = 2) +
+  labs(title = "Unsupervised Learning", color = "Cluster") +
+  theme_minimal()
+
+# Combine plots
+grid.arrange(p1, p2, ncol = 2)
+```
+
+## Supervised classification
+
+### Supervised classification
+
+- We have data that tells us the classes we wish to predict,
+- We have a number of predictive variables. 
+
+We wish to build a classifier ($\hat{C}$) which can return the predicted category ($\hat{y}$).
+
+$$\hat{y}_i = \hat{C}(\bf x_i)$$
+
+### Dimensionality is important
+
+```{r bi_class_data, echo = FALSE}
+X1 <- mvrnorm(100, c(0, 0), matrix(c(1, 0.9, 0.9, 1),2,2))
+X2 <- mvrnorm(100, c(0, 1), matrix(c(1, 0.9, 0.9, 1),2,2))
+X <- rbind(X1, X2)
+X <- as.data.frame(X)
+X$group <- as.factor(c(rep(1, 100), rep(2, 100)))
+
+colnames(X) <- c("x", "y", "group")
+
+p <- ggplot(X, aes(x = x, y = y, color = group)) +
+  geom_point(alpha = 0.7) +
+  theme_minimal() + labs(title = "Made up data")
+
+# Add marginal density plots
+ggExtra::ggMarginal(p, type = "density", groupColour = TRUE, groupFill = TRUE)
+```
+
+### With classification
+
+
+```{r biclass_fitted, echo = FALSE}
+# Fit QDA model
+qda_model <- qda(group ~ x + y, data = X)
+
+# Create grid for predictions
+x_seq <- seq(min(X$x) - 1, max(X$x) + 1, length.out = 200)
+y_seq <- seq(min(X$y) - 1, max(X$y) + 1, length.out = 200)
+grid <- expand.grid(x = x_seq, y = y_seq)
+
+# Predict class probabilities
+pred <- predict(qda_model, newdata = grid)
+grid$pred <- pred$class
+
+# Add boundary with contour
+p <- ggplot(X, aes(x = x, y = y, color = group)) +
+  geom_point(alpha = 0.7) +
+  geom_contour(data = cbind(grid, z = as.numeric(pred$class == 2)),
+               aes(x = x, y = y, z = z),
+               breaks = 0.5,
+               color = "black", linewidth = 1) +
+  theme_minimal() +
+  labs(title = "QDA Decision Boundary")
+
+# Add marginal density plots
+ggExtra::ggMarginal(p, type = "density", groupColour = TRUE, groupFill = TRUE)
+```
+
+
+### Demonstration based on loan defaults
+
+-   Data from `ISLR` package
+-   `Default` dataset
+-   10,000 rows on credit card defaults
+
+### Load packages
+
+Remember to use `renv::install()` if you wish to add packages
+
+```{r installcaret, eval = FALSE, echo = TRUE}
+renv::install("caret")
+```
+
+And on (some) Windows, if we wish to add this to the `lockfile`
+
+```{r recordcaret, eval = FALSE, echo = TRUE}
+renv::record("caret")
+```
+
+Then load the packages you need
+
+in the normal manner
+
+```{r loadcaret, echo = TRUE, eval = FALSE}
+library(caret)
+library(ggplot2)
+library(dplyr)
+```
+
+### Test and training sets
+
+-   As always, we need to split our data into test and training data sets
+-   Do note there are other strategies we can apply such as k-fold cross-validation
+
+```{r testtrain, echo = TRUE}
+data(Default)
+set.seed(42)
+n_train <- 5000
+default_idx = sample(nrow(Default), n_train)
+train_default = Default[default_idx, ]
+test_default = Default[-default_idx, ]
+```
+
+### In a targets pipeline
+
+In targets, write a function to create the test and training sets:
+
+```{r testtrainfunction, echo = TRUE}
+create_test_and_train <- function(df, n_train = 5000) {
+  set.seed(42)
+  idx = sample(nrow(df), n_train)
+  train = df[idx, ]
+  test = df[-idx, ]
+  return(list(test = test, train = train))
+}
+```
+
+### Then specify the pipeline
+
+Then in `_targets.R` we can type
+
+```{r librarytargets, echo=FALSE}
+library(targets)
+```
+
+```{r targetslist, eval = FALSE, echo = TRUE}
+list(
+  tar_target(
+    Default,
+    data(Default)
+  ),
+  tar_target(
+    test_and_train,
+    create_test_and_train(Default)
+  )
+)
+```
+
+### Now we can access the data
+
+```{r executetargetsfunc, echo= FALSE}
+test_and_train <- create_test_and_train(Default)
+```
+
+While we're developing our pipeline, we can obtain data from any part of an executed pipeline using `tar_load()`
+
+```{r tarload, echo = TRUE, eval = FALSE}
+targets::tar_load(test_and_train)
+
+```
+
+And from here, we can access the data as `test_and_train$train` and `test_and_train$test`.   I can even use `test <- test_and_train$train` etc. to save typing.
+
+### Some EDA
+
+We might want to do some EDA before building a classifier
+
+```{r featureplot, echo = FALSE}
+caret::featurePlot(
+  x = test_and_train$train[, c("balance", "income")], 
+  y = test_and_train$train$default,
+  plot = "density", 
+  scales = list(x = list(relation = "free"), y = list(relation = "free")), 
+  adjust = 1.5, 
+  pch = "|", 
+  layout = c(2, 1), 
+  auto.key = list(columns = 2)
+  )
+
+```
+
+### A cosmetic plot
+
+We're hoping to distinguish the labels in high dimensional space
+
+```{r classifiergoal, echo = FALSE}
+
+caret::featurePlot(
+  x = test_and_train$train[, c("balance", "income")], 
+  y = test_and_train$train$default, 
+  plot = "ellipse",
+  auto.key = list(columns = 2)
+  )
+```
+
+
+
+### Simple classifier
+
+Looking at the first plot, we could just take all values of `x` above a cut-off, say `balance` above 1,400
+
+```{r simpleclass, echo = TRUE}
+simple_class = function(x, boundary, above = 1, below = 0) {
+  ifelse(x > boundary, above, below)
+}
+train_pred = simple_class(x = test_and_train$train$balance, 
+                          boundary = 1400, above = "Yes", below = "No")
+test_pred = simple_class(x = test_and_train$test$balance, 
+                         boundary = 1400, above = "Yes", below = "No")
+```
+
+### Performance on training data?
+
+```{r, echo = TRUE}
+train_tab = table(predicted = train_pred, actual = test_and_train$train$default)
+(train_con_mat = caret::confusionMatrix(train_tab, positive = "Yes"))
+```
+
+### And on the test data
+
+```{r, echo = TRUE}
+test_tab = table(predicted = test_pred, actual = test_and_train$test$default)
+(test_con_mat = caret::confusionMatrix(test_tab, positive = "Yes"))
+
+```
+
+
+### Key Terms
+
+
+
++---------------+---------------------+---------------------+---------------------+
+|               | State 1             | State 2             |                     |
++===============+=====================+=====================+=====================+
+| Class 1       | True Positive (TP)  | False Positive (FP) | PPV                 |
++---------------+---------------------+---------------------+---------------------+
+| Class 2       | False Negative (FN) | True Negative (TN)  | NPV                 |
++---------------+---------------------+---------------------+---------------------+
+|               | Sensitivity:        | Specificity:        |                     |
+|               |                     |                     |                     |
+|               | TP / (TP + FN)      | TN / (FP + TN)      |                     |
++---------------+---------------------+---------------------+---------------------+
+
+Where PPV = positive predictive value $\frac{TP}{TP + FP}$ and NPV = negative predictive value $\frac{TN}{FN + TN}$
+
+### Classification cut off
+
+- Don't think any performance above 0.50 (binary problem) is a good classifier. 
+- We need to consider the **balance** of the classes. 
+- This makes the **prevalence** of positive cases important. Some made up data:
+
++-------------+----------------+----------------+
+|             | State 1        | State 2        |
++-------------+----------------+----------------+
+| Class 1     |  1,000         |  100           |
++-------------+----------------+----------------+
+| Class 2     |     0          |   0            |
++-------------+----------------+----------------+
+
+This classifier has no skill.
+
+
+### Hence Cohen's Kappa
+
+Cohen's Kappa ($\kappa$) is defined as:
+
+$$\kappa = \frac{p_o - p_e}{1 - p_e}$$
+
+Where:
+
+$p_o$ is the observed agreement (i.e., the proportion of correctly classified instances).
+
+$p_e$ is the expected agreement by chance (based on the distribution of class labels).
+
+
+
+
+
+### Classifier metrics
+
+Error rate: $err(\hat{C},\text{Data})= \frac{1}{n} I\big(y_i \neq C(x_i)\big)$
+
+Or the opposite:  $acc(\hat{C},\text{Data})= \frac{1}{n} I\big(y_i = C(x_i)\big)$
+
+Given $I(\cdot) =I\big(y_i = \hat{C}(x)\big) =
+\begin{cases}    1 & y_i = \hat{C}(x) \\   0 & y_i \neq \hat{C}(x) \\ \end{cases}
+$
+
+
+
+### Note also
+
+We focus on **test** performance
+
+$$err(\hat{C},\text{Data}_{test})= \frac{1}{n_{test}} \sum_{i \in test}I\big(y_i \neq C(x_i)\big)$$
+
+
+
+
+### A slightly more realistic classifier (Logistic regression)
+
+$$\log\left(\frac{p(x)}{1−p(x)}\right)=\beta_0 +\beta_1 x_1 + \beta_2 x_2 + \cdots  \beta_p x_p$$
+
+Rearranging;
+
+$$ p(x) = \frac{1}{1+\exp{\{−(\beta_0 + \beta_1 x_1 + \beta_2 x_2 + \cdots + \beta_p x_p)\}}} $$ $$ p(x) =  \sigma (\beta_0 + \beta_1 x_1 + \beta_2 x_2 + \cdots  \beta_p x_p)$$
+
+(Note, $\sigma(\cdot)$ is common notation in deep learning literature)
+
+### Numerically maximizing the likelihood (`R`)
+
+Fit the model to the training data
+
+```{r fit_glm, echo = TRUE}
+model_glm = glm(default ~ balance, 
+                data = test_and_train$train, family = binomial())
+```
+
+And obtain predictions (eventually) from the test data
+
+```{r test_glm, echo = TRUE}
+model_glm_pred = ifelse(predict(model_glm, 
+                                newdata = test_and_train$test, 
+                                type = "response") > 0.5, "Yes", "No")
+```
+
+### Performance
+
+```{r glmperf, echo = TRUE}
+test_tab = table(predicted = model_glm_pred, actual = test_and_train$test$default)
+test_confusion_matrix = caret::confusionMatrix(test_tab, positive = "Yes")
+test_confusion_matrix
+```
+
+
+### Or extract some key figures
+
+
+```{r accsensspec, echo = TRUE}
+c(train_con_mat$overall["Accuracy"], 
+  train_con_mat$byClass["Sensitivity"], 
+  train_con_mat$byClass["Specificity"])
+```
+
+
+### Visualised
+
+```{r logisticplot, echo = FALSE}
+train_default %>%
+  mutate(default = as.numeric(.data$default) - 1) %>%
+  ggplot(aes(x = .data$balance, y = .data$default)) + 
+  geom_point(color = "darkorange", shape = "|") +
+  geom_hline(yintercept = c(0, 1), linetype = "dashed") +
+  geom_hline(yintercept = 0.5, linetype = "dotted") +
+  stat_function(fun = function(x) predict(
+    model_glm, data.frame(balance = x), type = "response"),
+                color = "dodgerblue", linewidth = 1.2) +
+  geom_vline(xintercept = -coef(model_glm)[1] / coef(model_glm)[2], linewidth = 1.2) +
+  labs(title = "Using Logistic Regression for Classification",
+       x = "Balance",
+       y = "Default") +
+  theme_minimal()
+
+```
+
+### ROC curves
+
+```{r roc}
+library(pROC)
+test_prob = predict(model_glm, newdata = test_default, type = "response")
+test_roc = pROC::roc(test_default$default ~ test_prob, 
+                     plot = TRUE, print.auc = TRUE)
+
+
+```
+
+
+### If the cost of errors is not symmetric
+
+- Precision Recall curves could be used
+
+
+### Decision boundaries don't have to be linear
+
+```{r qda, echo = FALSE}
+# Set seed
+set.seed(42)
+# Generate circular data: inner circle = class 1, outer ring = class 2
+n <- 300
+r_inner <- sqrt(runif(n/2, min = 0.0, max = 1.0))
+theta_inner <- runif(n/2, 0, 2*pi)
+x_inner <- r_inner * cos(theta_inner)
+y_inner <- r_inner * sin(theta_inner)
+class1 <- data.frame(x = x_inner, y = y_inner, label = factor(1))
+
+r_outer <- sqrt(runif(n/2, min = 4.0, max = 6.0))
+theta_outer <- runif(n/2, 0, 2*pi)
+x_outer <- r_outer * cos(theta_outer)
+y_outer <- r_outer * sin(theta_outer)
+class2 <- data.frame(x = x_outer, y = y_outer, label = factor(2))
+
+# Combine
+data <- rbind(class1, class2)
+
+
+# Plot with decision boundary
+ggplot() +
+  geom_point(data = data, aes(x = x, y = y, color = label), size = 2) +
+  labs(title = "QDA on Circular Data (Non-linear Boundary)", fill = "Predicted", color = "Label") +
+  theme_minimal()
+
+```
+
+### And showing the boundaries
+
+```{r qdawithboundaries, echo = FALSE}
+# Train QDA model
+qda_model <- qda(label ~ x + y, data = data)
+
+# Create grid for prediction
+x_seq <- seq(min(data$x) - 1, max(data$x) + 1, length.out = 300)
+y_seq <- seq(min(data$y) - 1, max(data$y) + 1, length.out = 300)
+grid <- expand.grid(x = x_seq, y = y_seq)
+
+# Predict class on the grid
+qda_pred <- predict(qda_model, newdata = grid)
+grid$pred <- qda_pred$class
+
+
+ggplot() +
+  geom_tile(data = grid, aes(x = x, y = y, fill = pred), alpha = 0.3) +
+  geom_point(data = data, aes(x = x, y = y, color = label), size = 2) +
+  labs(title = "QDA on Circular Data (Non-linear Boundary)", fill = "Predicted", color = "Label") +
+  theme_minimal()
+
+```
+
+## Unsupervised classification
+
+### Unsupervised classification
+
+If I were interested in Pokemon
+
+```{r pokemondata, echo = FALSE}
+library(dplyr)
+pk <- read.csv("C:/Users/ph516/Downloads/All_pokemon.csv")
+pk[duplicated(pk$Pokemon),"Pokemon"] <- "Nidoran 2 (?)"
+rownames(pk) <- pk$Pokemon
+pocleaned <- pk %>% 
+  dplyr::select(HP:Spd)
+head(pocleaned)  
+  
+```
+
+### kmeans clustering
+
+```{r pokemoncluster, echo = TRUE}
+km_three <- kmeans(pocleaned, centers = 3, nstart = 20)
+
+# Inspect the result
+km_three$centers
+```
+
+### What do the results look like
+
+```{r viewclusters, echo = FALSE}
+pocleaned$cluster <- as.factor(km_three$cluster)
+GGally::ggpairs(pocleaned, aes(color = cluster))
+```
+
+### Within Cluster Sum of Squares
+
+
+```{r wss, echo = FALSE}
+# Create a small dataset with two natural clusters
+set.seed(1)
+points <- data.frame(
+  x = c(2, 1.5, 1.8, 8, 8.5),
+  y = c(1, 1.5, 2, 8, 7)
+)
+
+# Plot function with cluster centers and WCSS lines
+plot_clusters <- function(data, k) {
+  kmeans_result <- kmeans(data, centers = k)
+  data$cluster <- as.factor(kmeans_result$cluster)
+  centers <- as.data.frame(kmeans_result$centers)
+
+  # Calculate WCSS manually (to display)
+  wcss <- sum(kmeans_result$withinss)
+
+  p <- ggplot(data, aes(x = x, y = y, color = cluster)) +
+    geom_point(size = 4) +
+    geom_point(data = centers, aes(x = x, y = y), shape = 4, size = 5, stroke = 2, color = "black") +
+    geom_segment(data = data, aes(xend = centers[kmeans_result$cluster, "x"],
+                                  yend = centers[kmeans_result$cluster, "y"]),
+                 arrow = arrow(length = unit(0.1, "inches")), alpha = 0.4, linetype = "dotted") +
+    labs(title = paste("k =", k, " | WCSS =", round(wcss, 2))) +
+    theme_minimal()
+
+  return(p)
+}
+
+# Plot for k = 1 and k = 2
+p1 <- plot_clusters(points, 1)
+p2 <- plot_clusters(points, 2)
+
+# Show side by side
+grid.arrange(p1, p2, ncol = 2)
+```
+
+
+
+###  Scanning a range of cluster sizes
+
+```{r computewss, echo = TRUE}
+set.seed(123)
+# Compute WSS for different k values
+wss <- sapply(1:10, function(k) {
+  kmeans(pocleaned, centers = k, nstart = 10)$tot.withinss
+})
+
+# Create the scree plot using ggplot2
+elbow_df <- data.frame(k = 1:10, wss = wss)
+
+```
+
+### What does an elbow plot look like
+
+```{r elbowplot, echo = FALSE}
+ggplot(elbow_df, aes(x = k, y = wss)) +
+  geom_line() +
+  geom_point() +
+  scale_y_continuous(labels = scales::comma) +
+  scale_x_continuous(breaks = seq(1, 10, by = 1)) +
+  labs(title = "Scree Plot for k-means Clustering",
+       x = "Number of Clusters (k)",
+       y = "Within-Cluster Sum of Squares (WSS)") +
+  theme_minimal()
+```
+
+## Dimension reduction
+
+### Dimension reduction
+
+
+
+```{r linear-regression}
+library(ggplot2)
+library(MASS)
+
+# Generate correlated data
+set.seed(123)
+Sigma <- matrix(c(1, 0.8, 0.8, 1), 2, 2)  # Covariance matrix
+data <- as.data.frame(mvrnorm(n = 100, mu = c(0, 0), Sigma = Sigma))
+colnames(data) <- c("X", "Y")
+
+# Fit linear regression model
+lm_model <- lm(Y ~ X, data = data)
+
+# Compute predicted values (y_hat) for projection
+data$y_hat <- predict(lm_model, newdata = data)
+
+# Plot with vertical projection lines onto regression line
+ggplot(data, aes(x = X, y = Y)) +
+  geom_point(color = "darkorange") +  # Original points
+  geom_segment(aes(x = X, y = Y, xend = X, yend = y_hat), 
+               color = "gray", linewidth = 0.5) +  # Vertical projection lines
+  geom_smooth(method = "lm", color = "red", se = FALSE) +  # Linear regression line
+  labs(title = "Scatterplot with Regression Line and Projections onto Ŷ",
+       x = "X Variable",
+       y = "Y Variable") +
+  theme_minimal()
+
+```
+
+### But principal components
+
+```{r, pca, echo = FALSE}
+# Generate correlated data
+set.seed(123)
+Sigma <- matrix(c(1, 0.8, 0.8, 1), 2, 2)  # Covariance matrix
+data <- as.data.frame(mvrnorm(n = 100, mu = c(0, 0), Sigma = Sigma))
+colnames(data) <- c("X", "Y")
+
+# Perform PCA
+pca <- prcomp(data, center = TRUE, scale. = TRUE)
+
+# Extract first principal component vector
+pc1 <- pca$rotation[, 1]  
+
+# Compute PC1 slope for visualization
+pc1_slope <- pc1[2] / pc1[1]
+
+# Compute true orthogonal projection onto PC1
+compute_projection <- function(x, y, pc1, center) {
+  vec <- c(x, y) - center  # Translate to origin
+  proj_length <- sum(vec * pc1)  # Projection scalar
+  proj_point <- center + proj_length * pc1  # Projected point onto PC1
+  return(proj_point)
+}
+
+# Apply projection function to all points
+projections <- t(apply(data, 1, function(row) compute_projection(row[1], row[2], pc1, pca$center)))
+data$proj_X <- projections[, 1]
+data$proj_Y <- projections[, 2]
+
+# Plot with properly orthogonal projections onto PC1
+ggplot(data, aes(x = X, y = Y)) +
+  geom_point(color = "darkorange") +  # Original points
+  geom_segment(aes(x = X, y = Y, xend = proj_X, yend = proj_Y), 
+               color = "gray", linewidth = 0.5) +  # True orthogonal projection arrows
+  geom_abline(slope = pc1_slope, intercept = pca$center[2] - pca$center[1] * pc1_slope, 
+              color = "dodgerblue", linewidth = 1) +  # Correct PCA axis
+  coord_fixed() +  # Ensures equal scaling of x and y axes
+  labs(title = "Scatterplot with PCA Axis and True Orthogonal Projections",
+       x = "X Variable",
+       y = "Y Variable") +
+  theme_minimal()
+
+
+```
+
+### Principal components: key ideas
+
+- Need to carefully consider whether to use correlation or covariance matrix
+- More on [Eigen Analysis](https://www.3blue1brown.com/lessons/eigenvalues)
+- Eigenvalues tell you about the variance in each projected dimension
+- Eigenvectors tell you how to make the projection
+- Scores are the values in the projected space
+- Hope is that a small number of components describes most of the variance in the unprojected data
+
+### Plotting three clusters on the first two principal component projections
+
+```{r pokemonprojected, echo = FALSE}
+popr <- prcomp(pocleaned[,-7])
+rescaled <- data.frame(z1 = predict(popr)[,1], z2 = predict(popr)[,2])
+rescaled$cluster <- as.factor(km_three$cluster)
+rescaled %>%
+  ggplot(aes(x = z1, y = z2, color = cluster)) +
+  geom_point()
+
+
+```
+
+## Study plans
+
+### This week
+
+- Chapter 11 describes non-regression classifiers: decision trees (`rpart`), random forests, nearest neighbour, naive Bayes, artificial neural networks, ensemble methods. 
+- There are two extended examples, you should read both of these. We will look at these in the practical. You should bring any questions to the drop in session.
+- Do Problem 4 (`nasaweather`): predict type of storm given wind speed and pressure
+- Also do Problem 6 (`NHANES`): predict variable `SleepTrouble`
+
+
