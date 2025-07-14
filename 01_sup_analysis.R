@@ -63,7 +63,7 @@ sup_data %>%
   filter(missing_count > 0) %>%
   arrange(desc(missing_count))
 
-# Change categorical variables to factors
+# Encode categorical variables to factors
 sup_data <- sup_data %>%
   mutate(across(
     c(casualty_severity, sex_of_casualty, sex_of_driver,
@@ -281,3 +281,38 @@ model_comparison %>%
        y = "Value") +
   theme_minimal() +
   scale_fill_brewer(palette = "Set1")
+
+# Add cross-validation to Random Forest
+set.seed(42)
+rf_cv <- vfold_cv(train_data, v = 5, strata = casualty_severity)
+rf_res <- rf_wf %>%
+  fit_resamples(
+    resamples = rf_cv,
+    metrics = metric_set(accuracy, precision, recall, f_meas, roc_auc),
+    control = control_resamples(save_pred = TRUE)
+  )
+# Check the results
+rf_res %>%
+  collect_metrics() %>%
+  mutate(model = "Random Forest") %>%
+  select(model, everything()) %>%
+  knitr::kable(caption = "Random Forest 5-fold Cross-Validation Results")
+# Plot the ROC curve
+rf_roc_cv <- rf_res %>%
+  collect_predictions() %>%
+  roc_curve(truth = casualty_severity, .pred_Slight, .pred_Serious, .pred_Fatal)
+autoplot(rf_roc_cv) +
+  labs(title = "ROC Curve for Random Forest 5-fold Cross-Validation",
+       x = "False Positive Rate",
+       y = "True Positive Rate") +
+  theme_minimal()
+# Plot confusion matrix on every folds
+rf_conf_mat_cv <- rf_res %>%
+  collect_predictions() %>%
+  conf_mat(truth = casualty_severity, estimate = .pred_class)
+rf_conf_mat_cv %>%
+  autoplot(type = "heatmap") +
+  labs(title = "Confusion Matrix for Random Forest 5-fold Cross-Validation",
+       x = "Predicted",
+       y = "Actual") +
+  theme_minimal()
