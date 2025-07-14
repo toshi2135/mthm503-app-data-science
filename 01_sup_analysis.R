@@ -398,3 +398,57 @@ model_comparison_weighted %>%
   theme_minimal() +
   scale_fill_brewer(palette = "Set1")
 
+# Combine cross-validation with case weights
+## Create new train data with case weights columns
+class_weights <- train_data %>%
+  count(casualty_severity) %>%
+  mutate(weight = 1 / n) %>%
+  select(casualty_severity, weight)
+train_data_weighted <- train_data %>%
+  left_join(class_weights, by = "casualty_severity")
+## Create cross-validation with case weights
+set.seed(42)
+rf_cv_weighted <- vfold_cv(train_data_weighted, v = 5, strata = casualty_severity)
+## Build the spec with case weights
+rf_spec_weighted <- rand_forest(trees = 500) %>%
+  set_engine("ranger", case.weights = TRUE) %>%
+  set_mode("classification")
+## Build the recipe with case weights
+rf_rec <- recipe(casualty_severity ~ ., data = train_data_weighted) %>%
+  update_role(weight, new_role = "case_weights")
+## Build the workflow with case weights
+rf_wf_weighted <- workflow() %>%
+  add_recipe(rf_rec) %>%
+  add_model(rf_spec_weighted)
+# Fit the model with case weights
+rf_res_weighted <- rf_wf_weighted %>%
+  fit_resamples(
+    resamples = rf_cv_weighted,
+    metrics = metric_set(accuracy, precision, recall, f_meas, roc_auc),
+    control = control_resamples(save_pred = TRUE)
+  )
+# Check the results of the cross-validation with case weights
+rf_res_weighted %>%
+  collect_metrics() %>%
+  mutate(model = "Weighted Random Forest CV") %>%
+  select(model, everything()) %>%
+  knitr::kable(caption = "Weighted Random Forest 5-fold Cross-Validation Results")
+# Plot the ROC curve for the cross-validation with case weights
+rf_roc_weighted_cv <- rf_res_weighted %>%
+  collect_predictions() %>%
+  roc_curve(truth = casualty_severity, .pred_Slight, .pred_Serious, .pred_Fatal)
+autoplot(rf_roc_weighted_cv) +
+  labs(title = "ROC Curve for Weighted Random Forest 5-fold Cross-Validation",
+       x = "False Positive Rate",
+       y = "True Positive Rate") +
+  theme_minimal()
+# Plot confusion matrix on every folds for the cross-validation with case weights
+rf_conf_mat_weighted_cv <- rf_res_weighted %>%
+  collect_predictions() %>%
+  conf_mat(truth = casualty_severity, estimate = .pred_class)
+rf_conf_mat_weighted_cv %>%
+  autoplot(type = "heatmap") +
+  labs(title = "Confusion Matrix for Weighted Random Forest 5-fold Cross-Validation",
+       x = "Predicted",
+       y = "Actual") +
+  theme_minimal()
