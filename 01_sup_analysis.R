@@ -177,8 +177,8 @@ log_wf <- workflow() %>%
 # Small train data for faster fitting
 small_train <- train_data %>% slice_sample(n = 1000)
 # Fit the model on small train
-log_fit_small <- log_wf %>%
-  fit(data = small_train)
+# log_fit_small <- log_wf %>%
+#   fit(data = small_train)
 # Check levels
 library(forcats)
 fct_count(train_data$weather_conditions)
@@ -195,10 +195,10 @@ train_data_small <- small_train %>%
   )
 log_rec <- recipe(casualty_severity ~ ., data = train_data_small)
 # Fit the model on the small train data
-log_fit <- workflow() %>%
-  add_recipe(log_rec) %>%
-  add_model(log_spec) %>%
-  fit(data = train_data_small)
+# log_fit <- workflow() %>%
+#   add_recipe(log_rec) %>%
+#   add_model(log_spec) %>%
+#   fit(data = train_data_small)
 # Drop the columns for smaller data
 log_data_small <- train_data_small %>%
   select(
@@ -414,11 +414,10 @@ rf_spec_weighted <- rand_forest(trees = 500) %>%
   set_engine("ranger", case.weights = TRUE) %>%
   set_mode("classification")
 ## Build the recipe with case weights
-rf_rec <- recipe(casualty_severity ~ ., data = train_data_weighted) %>%
-  update_role(weight, new_role = "case_weights")
+rf_rec_weighted <- recipe(casualty_severity ~ ., data = train_data_weighted)
 ## Build the workflow with case weights
 rf_wf_weighted <- workflow() %>%
-  add_recipe(rf_rec) %>%
+  add_recipe(rf_rec_weighted) %>%
   add_model(rf_spec_weighted)
 # Fit the model with case weights
 rf_res_weighted <- rf_wf_weighted %>%
@@ -556,3 +555,214 @@ model_comparison_final %>%
        y = "Value") +
   theme_minimal() +
   scale_fill_brewer(palette = "Set1")
+
+# Expand the analysis to include more features
+# List the columns from the original datasets, combine all together in a list
+all_columns <- c(
+  names(casualty_pedestrian),
+  names(accident),
+  names(vehicle)
+)
+# Check the columns
+all_columns %>%
+  sort() %>%
+  tibble(column = .) %>%
+  mutate(column = str_replace_all(column, "_", " ")) %>%
+  knitr::kable(caption = "List of All Columns in the Datasets")
+
+# Create new data with more features
+casualty_sel <- casualty_pedestrian %>%
+  select(accident_index, casualty_severity, sex_of_casualty, age_of_casualty,
+         casualty_type, casualty_class, casualty_home_area_type, casualty_imd_decile)
+
+accident_sel <- accident %>%
+  select(accident_index, weather_conditions, light_conditions, urban_or_rural_area,
+         road_surface_conditions, speed_limit, day_of_week, time, junction_detail)
+
+vehicle_sel <- vehicle %>%
+  select(accident_index, sex_of_driver, age_of_driver, vehicle_type, engine_capacity_cc,
+         vehicle_manoeuvre, skidding_and_overturning, age_of_vehicle) %>%
+  group_by(accident_index) %>%
+  slice(1) %>%
+  ungroup()
+
+sup_data <- casualty_sel %>%
+  left_join(accident_sel, by = "accident_index") %>%
+  left_join(vehicle_sel, by = "accident_index") %>%
+  clean_names() %>%
+  drop_na()
+# Check the new data
+glimpse(sup_data)
+# Check for missing values in the new data
+sup_data %>%
+  summarise(across(everything(), ~ sum(is.na(.)))) %>%
+  pivot_longer(everything(), names_to = "variable", values_to = "missing_count") %>%
+  filter(missing_count > 0) %>%
+  arrange(desc(missing_count))
+# Check the distribution of the target variable in the new data
+sup_data %>%
+  count(casualty_severity) %>%
+  mutate(prop = n / sum(n))
+# Encode categorical variables to factors in the new data
+sup_data <- sup_data %>%
+  mutate(across(where(is.character), as.factor))
+# Check the new data again
+glimpse(sup_data)
+# Split the new data for train and test
+split_new <- initial_split(sup_data, strata = casualty_severity)
+train_data_new <- training(split_new)
+test_data_new <- testing(split_new)
+# Build Random Forest baseline model with the new data
+rf_rec_new <- recipe(casualty_severity ~ ., data = train_data_new)
+rf_spec_new <- rand_forest(trees = 500) %>%
+  set_engine("ranger") %>%
+  set_mode("classification")
+rf_wf_new <- workflow() %>%
+  add_recipe(rf_rec_new) %>%
+  add_model(rf_spec_new)
+# Fit the model with the new data
+rf_fit_new <- rf_wf_new %>%
+  fit(data = train_data_new)
+# Check the model with the new data
+rf_preds_new <- predict(rf_fit_new, test_data_new, type = "prob") %>%
+  bind_cols(predict(rf_fit_new, test_data_new)) %>%
+  bind_cols(test_data_new)
+# Check the metrics with the new data
+rf_metrics_new <- rf_preds_new %>%
+  metrics(truth = casualty_severity, estimate = .pred_class)
+rf_roc_new <- roc_curve(rf_preds_new, truth = casualty_severity,
+                        .pred_Slight, .pred_Serious, .pred_Fatal)
+autoplot(rf_roc_new) +
+  labs(title = "ROC Curve for Random Forest Model with New Features",
+       x = "False Positive Rate",
+       y = "True Positive Rate") +
+  theme_minimal()
+# Check the confusion matrix with the new data
+rf_conf_mat_new <- conf_mat(rf_preds_new, truth = casualty_severity, estimate = .pred_class)
+rf_conf_mat_new %>%
+  autoplot(type = "heatmap") +
+  labs(title = "Confusion Matrix for Random Forest Model with New Features",
+       x = "Predicted",
+       y = "Actual") +
+  theme_minimal()
+# Check the accuracy, precision, recall, and F1 score with the new data
+rf_accuracy_new <- rf_preds_new %>%
+  accuracy(truth = casualty_severity, estimate = .pred_class)
+rf_precision_new <- rf_preds_new %>%
+  precision(truth = casualty_severity, estimate = .pred_class)
+rf_recall_new <- rf_preds_new %>%
+  recall(truth = casualty_severity, estimate = .pred_class)
+rf_f1_new <- rf_preds_new %>%
+  f_meas(truth = casualty_severity, estimate = .pred_class)
+# Create a summary table for the model with new features
+rf_summary_new <- tibble(
+  model = "Random Forest with New Features",
+  accuracy = rf_accuracy_new$.estimate,
+  precision = rf_precision_new$.estimate,
+  recall = rf_recall_new$.estimate,
+  f1_score = rf_f1_new$.estimate
+)
+# Show the summary table for the model with new features
+rf_summary_new %>%
+  knitr::kable(caption = "Random Forest Model with New Features Summary")
+# Compare the model with new features with the previous models
+model_comparison_new <- model_comparison_final %>%
+  bind_rows(rf_summary_new) %>%
+  mutate(model = factor(model, levels = c("Random Forest", "Logistic Regression", "Weighted Random Forest", "Final Tuned Random Forest", "Random Forest with New Features")))
+# Show the comparison
+model_comparison_new %>%
+  pivot_longer(-model, names_to = "metric", values_to = "value") %>%
+  ggplot(aes(x = model, y = value, fill = metric)) +
+  geom_col(position = "dodge") +
+  labs(title = "Model Comparison with New Features",
+       x = "Model",
+       y = "Value") +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set1")
+
+# Add class weights to the model with new features
+## Calculate class weights for the new data
+class_counts_new <- train_data_new %>%
+  count(casualty_severity)
+## Calculate weights as inverse of class frequencies for the new data
+class_weights_new <- 1 / class_counts_new$n
+## Normalize weights to sum to 1 for the new data
+names(class_weights_new) <- class_counts_new$casualty_severity
+## Create a new column in the training data with the weights for the new data
+train_data_new <- train_data_new %>%
+  mutate(weight = class_weights_new[as.character(casualty_severity)])
+# Update the Random Forest model to use case weights for the new data
+rf_spec_weighted_new <- rand_forest(trees = 500) %>%
+  set_engine("ranger", case.weights = train_data_new$weight) %>%
+  set_mode("classification")
+rf_wf_weighted_new <- workflow() %>%
+  add_recipe(rf_rec_new) %>%
+  add_model(rf_spec_weighted_new)
+# Fit the weighted model with the new data
+rf_fit_weighted_new <- rf_wf_weighted_new %>%
+  fit(data = train_data_new)
+# Check the weighted model with the new data
+rf_preds_weighted_new <- predict(rf_fit_weighted_new, test_data_new, type = "prob") %>%
+  bind_cols(predict(rf_fit_weighted_new, test_data_new)) %>%
+  bind_cols(test_data_new)
+# Check the metrics for the weighted model with the new data
+rf_metrics_weighted_new <- rf_preds_weighted_new %>%
+  metrics(truth = casualty_severity, estimate = .pred_class)
+rf_roc_weighted_new <- roc_curve(rf_preds_weighted_new, truth = casualty_severity,
+                                 .pred_Slight, .pred_Serious, .pred_Fatal)
+autoplot(rf_roc_weighted_new) +
+  labs(title = "ROC Curve for Weighted Random Forest Model with New Features",
+       x = "False Positive Rate",
+       y = "True Positive Rate") +
+  theme_minimal()
+# Check the confusion matrix for the weighted model with the new data
+rf_conf_mat_weighted_new <- conf_mat(rf_preds_weighted_new, truth = casualty_severity, estimate = .pred_class)
+rf_conf_mat_weighted_new %>%
+  autoplot(type = "heatmap") +
+  labs(title = "Confusion Matrix for Weighted Random Forest Model with New Features",
+       x = "Predicted",
+       y = "Actual") +
+  theme_minimal()
+# Check the accuracy, precision, recall, and F1 score for the weighted model with the new data
+rf_accuracy_weighted_new <- rf_preds_weighted_new %>%
+  accuracy(truth = casualty_severity, estimate = .pred_class)
+rf_precision_weighted_new <- rf_preds_weighted_new %>%
+  precision(truth = casualty_severity, estimate = .pred_class)
+rf_recall_weighted_new <- rf_preds_weighted_new %>%
+  recall(truth = casualty_severity, estimate = .pred_class)
+rf_f1_weighted_new <- rf_preds_weighted_new %>%
+  f_meas(truth = casualty_severity, estimate = .pred_class)
+# Create a summary table for the weighted model with new features
+rf_summary_weighted_new <- tibble(
+  model = "Weighted Random Forest with New Features",
+  accuracy = rf_accuracy_weighted_new$.estimate,
+  precision = rf_precision_weighted_new$.estimate,
+  recall = rf_recall_weighted_new$.estimate,
+  f1_score = rf_f1_weighted_new$.estimate
+)
+# Show the summary table for the weighted model with new features
+rf_summary_weighted_new %>%
+  knitr::kable(caption = "Weighted Random Forest Model with New Features Summary")
+# Analyse the accuracy, precision, recall and F1 score on each class
+library(yardstick)
+## Calculate accuracy for each class
+precision_by_class <- rf_preds_weighted %>%
+  group_by(casualty_severity) %>%
+  precision(truth = casualty_severity, estimate = .pred_class)
+## Calculate recall for each class
+recall_by_class <- rf_preds_weighted %>%
+  group_by(casualty_severity) %>%
+  recall(truth = casualty_severity, estimate = .pred_class)
+## Calculate F1 score for each class
+f1_by_class <- rf_preds_weighted %>%
+  group_by(casualty_severity) %>%
+  f_meas(truth = casualty_severity, estimate = .pred_class)
+# Create a summary table for the metrics by class
+metrics_by_class <- precision_by_class %>%
+  left_join(recall_by_class, by = "casualty_severity") %>%
+  left_join(f1_by_class, by = "casualty_severity") %>%
+  rename(precision = .estimate.x, recall = .estimate.y, f1_score = .estimate) %>%
+  select(casualty_severity, precision, recall, f1_score)
+# Show the summary table for the metrics by class
+metrics_by_class %>%
+  knitr::kable(caption = "Metrics by Class for Weighted Random Forest Model with New Features")
