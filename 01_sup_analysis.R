@@ -165,3 +165,119 @@ rf_f1 %>%
   mutate(f1 = round(.estimate, 3)) %>%
   select(-.estimate) %>%
   knitr::kable(caption = "Random Forest Model F1 Score")
+
+# Build Logistic Regression baseline model
+log_spec <- multinom_reg() %>%
+  set_engine("nnet") %>%
+  set_mode("classification")
+log_rec <- recipe(casualty_severity ~ ., data = train_data)
+log_wf <- workflow() %>%
+  add_recipe(log_rec) %>%
+  add_model(log_spec)
+# Small train data for faster fitting
+small_train <- train_data %>% slice_sample(n = 1000)
+# Fit the model on small train
+log_fit_small <- log_wf %>%
+  fit(data = small_train)
+# Check levels
+library(forcats)
+fct_count(train_data$weather_conditions)
+fct_count(train_data$light_conditions)
+fct_count(train_data$urban_or_rural_area)
+# Lower the levels of the categorical variables
+train_data_small <- small_train %>%
+  mutate(
+    weather_conditions = fct_lump_n(weather_conditions, n = 5),
+    light_conditions = fct_lump_n(light_conditions, n = 3),
+    urban_or_rural_area = fct_lump_n(urban_or_rural_area, n = 2),
+    sex_of_casualty = fct_lump_n(sex_of_casualty, n = 2),
+    sex_of_driver = fct_lump_n(sex_of_driver, n = 2)
+  )
+log_rec <- recipe(casualty_severity ~ ., data = train_data_small)
+# Fit the model on the small train data
+log_fit <- workflow() %>%
+  add_recipe(log_rec) %>%
+  add_model(log_spec) %>%
+  fit(data = train_data_small)
+# Drop the columns for smaller data
+log_data_small <- train_data_small %>%
+  select(
+    casualty_severity,
+    sex_of_casualty,
+    age_of_casualty,
+    light_conditions,
+    age_of_driver
+  )
+log_rec <- recipe(casualty_severity ~ ., data = log_data_small) %>%
+  step_novel(all_nominal_predictors()) %>%
+  step_unknown(all_nominal_predictors())
+# Fit the model on the small train data
+log_fit <- workflow() %>%
+  add_recipe(log_rec) %>%
+  add_model(log_spec) %>%
+  fit(data = log_data_small)
+# Check the model
+log_preds <- predict(log_fit, test_data, type = "prob") %>%
+  bind_cols(predict(log_fit, test_data)) %>%
+  bind_cols(test_data)
+# Check the metrics
+log_metrics <- log_preds %>%
+  metrics(truth = casualty_severity, estimate = .pred_class)
+log_roc <- roc_curve(log_preds, truth = casualty_severity,
+                     .pred_Slight, .pred_Serious, .pred_Fatal)
+autoplot(log_roc)
+# Check the confusion matrix
+log_conf_mat <- conf_mat(log_preds, truth = casualty_severity, estimate = .pred_class)
+log_conf_mat %>%
+  autoplot(type = "heatmap") +
+  labs(title = "Confusion Matrix for Logistic Regression Model",
+       x = "Predicted",
+       y = "Actual") +
+  theme_minimal()
+# Check the accuracy
+log_accuracy <- log_preds %>%
+  accuracy(truth = casualty_severity, estimate = .pred_class)
+log_accuracy %>%
+  mutate(accuracy = round(.estimate, 3)) %>%
+  select(-.estimate) %>%
+  knitr::kable(caption = "Logistic Regression Model Accuracy")
+# Check the precision
+log_precision <- log_preds %>%
+  precision(truth = casualty_severity, estimate = .pred_class)
+log_precision %>%
+  mutate(precision = round(.estimate, 3)) %>%
+  select(-.estimate) %>%
+  knitr::kable(caption = "Logistic Regression Model Precision")
+# Check the recall
+log_recall <- log_preds %>%
+  recall(truth = casualty_severity, estimate = .pred_class)
+log_recall %>%
+  mutate(recall = round(.estimate, 3)) %>%
+  select(-.estimate) %>%
+  knitr::kable(caption = "Logistic Regression Model Recall")
+# Check the F1 score
+log_f1 <- log_preds %>%
+  f_meas(truth = casualty_severity, estimate = .pred_class)
+log_f1 %>%
+  mutate(f1 = round(.estimate, 3)) %>%
+  select(-.estimate) %>%
+  knitr::kable(caption = "Logistic Regression Model F1 Score")
+
+# Compare the models
+model_comparison <- tibble(
+  model = c("Random Forest", "Logistic Regression"),
+  accuracy = c(rf_accuracy$.estimate, log_accuracy$.estimate),
+  precision = c(rf_precision$.estimate, log_precision$.estimate),
+  recall = c(rf_recall$.estimate, log_recall$.estimate),
+  f1_score = c(rf_f1$.estimate, log_f1$.estimate)
+)
+# Plot the model comparison
+model_comparison %>%
+  pivot_longer(-model, names_to = "metric", values_to = "value") %>%
+  ggplot(aes(x = model, y = value, fill = metric)) +
+  geom_col(position = "dodge") +
+  labs(title = "Model Comparison",
+       x = "Model",
+       y = "Value") +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set1")
