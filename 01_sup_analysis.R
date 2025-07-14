@@ -452,3 +452,107 @@ rf_conf_mat_weighted_cv %>%
        x = "Predicted",
        y = "Actual") +
   theme_minimal()
+
+# Fine-tuning the model
+# Use the `tune` package to fine-tune the Random Forest model
+library(tune)
+# Define a grid of hyperparameters to tune
+rf_grid <- grid_regular(
+  trees(range = c(100, 1000)),
+  min_n(range = c(1, 10)),
+  mtry(range = c(1, ncol(train_data) - 1)),
+  levels = 5
+)
+# Create a new workflow with the Random Forest model
+rf_wf_tune <- workflow() %>%
+  add_recipe(rf_rec) %>%
+  add_model(rf_spec)
+# Perform hyperparameter tuning using cross-validation
+rf_tune_res <- rf_wf_tune %>%
+  tune_grid(
+    resamples = rf_cv_weighted,
+    grid = rf_grid,
+    metrics = metric_set(accuracy, precision, recall, f_meas, roc_auc),
+    control = control_grid(save_pred = TRUE)
+  )
+# Check the results of the hyperparameter tuning
+rf_tune_res %>%
+  collect_metrics()
+rf_tune_res %>%
+  collect_metrics() %>%
+  filter(.metric == "f_meas") %>%
+  arrange(desc(mean))
+# Plot the results of the hyperparameter tuning
+rf_tune_res %>%
+  collect_predictions() %>%
+  roc_curve(truth = casualty_severity, .pred_Slight, .pred_Serious, .pred_Fatal) %>%
+  autoplot() +
+  labs(title = "ROC Curve for Tuned Random Forest Model",
+       x = "False Positive Rate",
+       y = "True Positive Rate") +
+  theme_minimal()
+# Get the best hyperparameters
+best_rf_params <- rf_tune_res %>%
+  select_best(metric = "f_meas")
+# Finalize the workflow with the best hyperparameters
+rf_wf_final <- rf_wf_tune %>%
+  finalize_workflow(best_rf_params)
+# Fit the final model on the training data
+rf_fit_final <- rf_wf_final %>%
+  fit(data = train_data_weighted)
+# Check the final model
+rf_preds_final <- predict(rf_fit_final, test_data, type = "prob") %>%
+  bind_cols(predict(rf_fit_final, test_data)) %>%
+  bind_cols(test_data)
+# Check the metrics for the final model
+rf_metrics_final <- rf_preds_final %>%
+  metrics(truth = casualty_severity, estimate = .pred_class)
+rf_roc_final <- roc_curve(rf_preds_final, truth = casualty_severity,
+                          .pred_Slight, .pred_Serious, .pred_Fatal)
+autoplot(rf_roc_final) +
+  labs(title = "ROC Curve for Final Tuned Random Forest Model",
+       x = "False Positive Rate",
+       y = "True Positive Rate") +
+  theme_minimal()
+# Check the confusion matrix for the final model
+rf_conf_mat_final <- conf_mat(rf_preds_final, truth = casualty_severity, estimate = .pred_class)
+rf_conf_mat_final %>%
+  autoplot(type = "heatmap") +
+  labs(title = "Confusion Matrix for Final Tuned Random Forest Model",
+       x = "Predicted",
+       y = "Actual") +
+  theme_minimal()
+# Check the accuracy, precision, recall, and F1 score for the final model
+rf_accuracy_final <- rf_preds_final %>%
+  accuracy(truth = casualty_severity, estimate = .pred_class)
+rf_precision_final <- rf_preds_final %>%
+  precision(truth = casualty_severity, estimate = .pred_class)
+rf_recall_final <- rf_preds_final %>%
+  recall(truth = casualty_severity, estimate = .pred_class)
+rf_f1_final <- rf_preds_final %>%
+  f_meas(truth = casualty_severity, estimate = .pred_class)
+# Create a summary table for the final model
+rf_summary_final <- tibble(
+  model = "Final Tuned Random Forest",
+  accuracy = rf_accuracy_final$.estimate,
+  precision = rf_precision_final$.estimate,
+  recall = rf_recall_final$.estimate,
+  f1_score = rf_f1_final$.estimate
+)
+# Show the summary table for the final model
+rf_summary_final %>%
+  knitr::kable(caption = "Final Tuned Random Forest Model Summary")
+# Compare the final model with the baseline models
+model_comparison_final <- model_comparison_weighted %>%
+  bind_rows(rf_summary_final) %>%
+  mutate(model = factor(model, levels = c("Random Forest", "Logistic Regression", "Weighted Random Forest", "Final Tuned Random Forest")))
+# Plot the model comparison with the final model
+model_comparison_final %>%
+  pivot_longer(-model, names_to = "metric", values_to = "value") %>%
+  ggplot(aes(x = model, y = value, fill = metric)) +
+  geom_col(position = "dodge") +
+  labs(title = "Model Comparison with Final Tuned Random Forest",
+       x = "Model",
+       y = "Value") +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set1")
