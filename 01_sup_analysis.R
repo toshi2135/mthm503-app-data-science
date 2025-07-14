@@ -766,3 +766,85 @@ metrics_by_class <- precision_by_class %>%
 # Show the summary table for the metrics by class
 metrics_by_class %>%
   knitr::kable(caption = "Metrics by Class for Weighted Random Forest Model with New Features")
+
+# Apply SMOTE to handle class imbalance using `themis`
+library(themis)
+## Create a recipe with SMOTE
+rf_rec_smote <- recipe(casualty_severity ~ ., data = train_data_new) %>%
+  step_dummy(all_nominal_predictors()) %>%
+  step_smote(casualty_severity)
+## Create the model
+rf_spec_smote <- rand_forest(trees = 500) %>%
+  set_engine("ranger") %>%
+  set_mode("classification")
+## Create the workflow with SMOTE
+rf_wf_smote <- workflow() %>%
+  add_recipe(rf_rec_smote) %>%
+  add_model(rf_spec_smote)
+## Fit the model with SMOTE
+rf_fit_smote <- rf_wf_smote %>%
+  fit(data = train_data_new)
+## Check the model with SMOTE
+rf_preds_smote <- predict(rf_fit_smote, test_data_new, type = "prob") %>%
+  bind_cols(predict(rf_fit_smote, test_data_new)) %>%
+  bind_cols(test_data_new)
+## Check the metrics with SMOTE
+rf_metrics_smote <- rf_preds_smote %>%
+  metrics(truth = casualty_severity, estimate = .pred_class)
+rf_roc_smote <- roc_curve(rf_preds_smote, truth = casualty_severity,
+                             .pred_Slight, .pred_Serious, .pred_Fatal)
+autoplot(rf_roc_smote) +
+  labs(title = "ROC Curve for Random Forest Model with SMOTE",
+       x = "False Positive Rate",
+       y = "True Positive Rate") +
+  theme_minimal()
+## Check the confusion matrix with SMOTE
+rf_conf_mat_smote <- conf_mat(rf_preds_smote, truth = casualty_severity, estimate = .pred_class)
+rf_conf_mat_smote %>%
+  autoplot(type = "heatmap") +
+  labs(title = "Confusion Matrix for Random Forest Model with SMOTE",
+       x = "Predicted",
+       y = "Actual") +
+  theme_minimal()
+## Check the accuracy, precision, recall, and F1 score with SMOTE
+rf_accuracy_smote <- rf_preds_smote %>%
+  accuracy(truth = casualty_severity, estimate = .pred_class)
+rf_precision_smote <- rf_preds_smote %>%
+  precision(truth = casualty_severity, estimate = .pred_class)
+rf_recall_smote <- rf_preds_smote %>%
+  recall(truth = casualty_severity, estimate = .pred_class)
+rf_f1_smote <- rf_preds_smote %>%
+  f_meas(truth = casualty_severity, estimate = .pred_class)
+## Create a summary table for the model with SMOTE
+rf_summary_smote <- tibble(
+  model = "Random Forest with SMOTE",
+  accuracy = rf_accuracy_smote$.estimate,
+  precision = rf_precision_smote$.estimate,
+  recall = rf_recall_smote$.estimate,
+  f1_score = rf_f1_smote$.estimate
+)
+## Show the summary table for the model with SMOTE
+rf_summary_smote %>%
+  knitr::kable(caption = "Random Forest Model with SMOTE Summary")
+## Analyse the accuracy, precision, recall and F1 score on each class with SMOTE
+rf_preds_smote %>%
+  group_by(casualty_severity) %>%
+  summarise(
+    precision = precision_vec(casualty_severity, .pred_class),
+    recall = recall_vec(casualty_severity, .pred_class),
+    f1_score = f_meas_vec(casualty_severity, .pred_class)
+  )
+## Compare the model with SMOTE with the previous models
+model_comparison_smote <- model_comparison_new %>%
+  bind_rows(rf_summary_smote) %>%
+  mutate(model = factor(model, levels = c("Random Forest", "Logistic Regression", "Weighted Random Forest", "Final Tuned Random Forest", "Random Forest with New Features", "Random Forest with SMOTE")))
+## Show the comparison
+model_comparison_smote %>%
+  pivot_longer(-model, names_to = "metric", values_to = "value") %>%
+  ggplot(aes(x = model, y = value, fill = metric)) +
+  geom_col(position = "dodge") +
+  labs(title = "Model Comparison with SMOTE",
+       x = "Model",
+       y = "Value") +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set1")
