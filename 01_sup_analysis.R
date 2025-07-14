@@ -316,3 +316,85 @@ rf_conf_mat_cv %>%
        x = "Predicted",
        y = "Actual") +
   theme_minimal()
+
+# Apply case weights to Random Forest to handle class imbalance
+## Calculate class weights
+class_counts <- train_data %>%
+  count(casualty_severity)
+## Calculate weights as inverse of class frequencies
+class_weights <- 1 / class_counts$n
+## Normalize weights to sum to 1
+names(class_weights) <- class_counts$casualty_severity
+## Create a new column in the training data with the weights
+train_data_weighted <- train_data %>%
+  mutate(weight = class_weights[casualty_severity])
+
+# Update the Random Forest model to use case weights
+rf_spec_weighted <- rand_forest(trees = 500) %>%
+  set_engine("ranger", case.weights = train_data_weighted$weight) %>%
+  set_mode("classification")
+rf_wf_weighted <- workflow() %>%
+  add_recipe(rf_rec) %>%
+  add_model(rf_spec_weighted)
+# Fit the weighted model
+rf_fit_weighted <- rf_wf_weighted %>%
+  fit(data = train_data_weighted)
+# Check the weighted model
+rf_preds_weighted <- predict(rf_fit_weighted, test_data, type = "prob") %>%
+  bind_cols(predict(rf_fit_weighted, test_data)) %>%
+  bind_cols(test_data)
+# Check the metrics for the weighted model
+rf_metrics_weighted <- rf_preds_weighted %>%
+  metrics(truth = casualty_severity, estimate = .pred_class)
+rf_roc_weighted <- roc_curve(rf_preds_weighted, truth = casualty_severity,
+                             .pred_Slight, .pred_Serious, .pred_Fatal)
+
+autoplot(rf_roc_weighted) +
+  labs(title = "ROC Curve for Weighted Random Forest Model",
+       x = "False Positive Rate",
+       y = "True Positive Rate") +
+  theme_minimal()
+# Check the confusion matrix for the weighted model
+rf_conf_mat_weighted <- conf_mat(rf_preds_weighted, truth = casualty_severity, estimate = .pred_class)
+rf_conf_mat_weighted %>%
+  autoplot(type = "heatmap") +
+  labs(title = "Confusion Matrix for Weighted Random Forest Model",
+       x = "Predicted",
+       y = "Actual") +
+  theme_minimal()
+# Check the accuracy, precision, recall, and F1 score for the weighted model
+rf_accuracy_weighted <- rf_preds_weighted %>%
+  accuracy(truth = casualty_severity, estimate = .pred_class)
+rf_precision_weighted <- rf_preds_weighted %>%
+  precision(truth = casualty_severity, estimate = .pred_class)
+rf_recall_weighted <- rf_preds_weighted %>%
+  recall(truth = casualty_severity, estimate = .pred_class)
+rf_f1_weighted <- rf_preds_weighted %>%
+  f_meas(truth = casualty_severity, estimate = .pred_class)
+# Create a summary table for the weighted model
+rf_summary_weighted <- tibble(
+  model = "Weighted Random Forest",
+  accuracy = rf_accuracy_weighted$.estimate,
+  precision = rf_precision_weighted$.estimate,
+  recall = rf_recall_weighted$.estimate,
+  f1_score = rf_f1_weighted$.estimate
+)
+# Show the summary table
+rf_summary_weighted %>%
+  knitr::kable(caption = "Weighted Random Forest Model Summary")
+
+# Compare the weighted model with the baseline models
+model_comparison_weighted <- model_comparison %>%
+  bind_rows(rf_summary_weighted) %>%
+  mutate(model = factor(model, levels = c("Random Forest", "Logistic Regression", "Weighted Random Forest")))
+# Plot the model comparison with the weighted model
+model_comparison_weighted %>%
+  pivot_longer(-model, names_to = "metric", values_to = "value") %>%
+  ggplot(aes(x = model, y = value, fill = metric)) +
+  geom_col(position = "dodge") +
+  labs(title = "Model Comparison with Weighted Random Forest",
+       x = "Model",
+       y = "Value") +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set1")
+
