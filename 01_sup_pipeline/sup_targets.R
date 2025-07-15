@@ -5,11 +5,6 @@ library(targets)
 library(tarchetypes)
 library(here)
 
-tar_option_set(
-  packages = c("tidyverse", "tidymodels", "RPostgres", "vip"),
-  workspace_on_error = TRUE
-)
-
 # Define the targets for the supervised learning pipeline
 list(
   # Load data
