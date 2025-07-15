@@ -64,37 +64,39 @@ sup_data %>%
   pivot_longer(everything(), names_to = "variable", values_to = "missing_count") %>%
   filter(missing_count > 0) %>%
   arrange(desc(missing_count))
+## Drop columns with too many missing values
+sup_data <- sup_data %>% select(-vehicle_manoeuvre)
 ## Impute missing data
-### Calculate median for numeric variables
-median_age_driver <- median(sup_data$age_of_driver, na.rm = TRUE)
-median_age_casualty <- median(sup_data$age_of_casualty, na.rm = TRUE)
-### Impute missing values
+### Impute `age_of_vehicle` with median
+median_age_vehicle <- median(sup_data$age_of_vehicle, na.rm = TRUE)
+sup_data <- sup_data %>%
+  mutate(age_of_vehicle = if_else(is.na(age_of_vehicle), median_age_vehicle, age_of_vehicle))
+### Impute categorical variables with Unknown
 sup_data <- sup_data %>%
   mutate(
-    age_of_driver = if_else(is.na(age_of_driver), median_age_driver, age_of_driver),
-    age_of_casualty = if_else(is.na(age_of_casualty), median_age_casualty, age_of_casualty)
+    casualty_home_area_type = fct_explicit_na(as.factor(casualty_home_area_type), na_level = "Missing"),
+    junction_detail = fct_explicit_na(as.factor(junction_detail), na_level = "Missing"),
+    sex_of_casualty = fct_explicit_na(as.factor(sex_of_casualty), na_level = "Missing")
   )
-## Check the missing values again
-sup_data %>%
-  summarise(across(everything(), ~ sum(is.na(.)))) %>%
-  pivot_longer(everything(), names_to = "variable", values_to = "missing_count") %>%
-  filter(missing_count > 0) %>%
-  arrange(desc(missing_count))
-## Encode categorical variables to factors
-sup_data <- sup_data %>%
-  mutate(across(where(is.character), as.factor))
 ## Check the data again
 glimpse(sup_data)
-## Check the distribution of the target variable
-sup_data %>%
-  count(casualty_severity) %>%
-  mutate(percentage = n / sum(n) * 100) %>%
-  ggplot(aes(x = casualty_severity, y = percentage)) +
-  geom_col() +
-  labs(title = "Distribution of Casualty Severity",
-       x = "Casualty Severity",
-       y = "Percentage") +
-  theme_minimal()
+summary(sup_data)
+## Encode categorical variables to factors
+sup_data <- sup_data %>%
+  mutate(
+    pedestrian_movement = as.factor(pedestrian_movement),
+    weather_conditions = as.factor(weather_conditions),
+    light_conditions = as.factor(light_conditions),
+    urban_or_rural_area = as.factor(urban_or_rural_area),
+    road_type = as.factor(road_type),
+    sex_of_driver = as.factor(sex_of_driver),
+    journey_purpose_of_driver = as.factor(journey_purpose_of_driver),
+    vehicle_type = as.factor(vehicle_type),
+    day_of_week = as.factor(day_of_week),
+    is_weekend = as.factor(is_weekend)
+  )
+## Check the data again
+glimpse(sup_data)
 ## Split the data for train and test
 split <- initial_split(sup_data, strata = casualty_severity)
 train_data <- training(split)
