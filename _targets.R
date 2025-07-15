@@ -8,9 +8,8 @@ source(here("R", "load_data.R"))
 source(here("R", "utils.R"))
 
 # Set global packages
-tar_option_set(packages = c("DBI", "RPostgres", "here", 
-                            "tidyverse", "tidymodels", "dplyr", 
-                            "nnet"))
+tar_option_set(packages = c("dplyr", "DBI", "RPostgres"))
+
 # Load sub-targets from the 01_sup_pipeline directory
 sub_targets <- purrr::map(
   list.files(here("01_sup_pipeline"), pattern = "^sup_.*\\.R$", full.names = TRUE),
