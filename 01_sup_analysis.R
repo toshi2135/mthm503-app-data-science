@@ -4,9 +4,11 @@
 # Load packages
 library(tidyverse)
 library(tidymodels)
-library(stats19)
-library(janitor)
 library(here)
+library(DBI)
+library(RPostgres)
+# ---
+
 # ---
 # Data querying
 ## Use the .Renviron file to set the environment variables and connect to DB
@@ -50,6 +52,8 @@ glimpse(sup_data)
 summary(sup_data)
 ## Close the connection
 DBI::dbDisconnect(conn)
+# ---
+
 # ---
 # Data Preprocessing
 ## Drop `obs_date` column
@@ -134,6 +138,8 @@ count(train_data)
 test_data <- testing(split)
 count(test_data)
 # ---
+
+# ---
 # Build Random Forest baseline model
 library(ranger)
 ## Build the recipe
@@ -149,6 +155,8 @@ rf_wf <- workflow() %>%
 ## Fit the model
 rf_fit <- rf_wf %>%
   fit(data = train_data)
+
+# Evaluate the model
 ## Check the model
 rf_preds <- predict(rf_fit, test_data, type = "prob") %>%
   bind_cols(predict(rf_fit, test_data)) %>%
@@ -191,7 +199,9 @@ vip::vip(rf_fit, num_features = 10) +
   labs(title = "Feature Importance for Random Forest Model") +
   theme_minimal()
 ## Save the model
-saveRDS(rf_fit, here("models", "rf_baseline_model.rds"))
+saveRDS(rf_fit, here("01_sup_pipeline", "sup_model_rf_baseline.rds"))
+# ---
+
 # ---
 # Build Logistic Regression baseline model
 library(nnet)
@@ -210,6 +220,8 @@ log_wf <- workflow() %>%
 ## Fit the model
 log_fit <- log_wf %>%
   fit(data = train_data)
+
+# Evaluate the model
 ## Check the model
 log_preds <- predict(log_fit, test_data, type = "prob") %>%
   bind_cols(predict(log_fit, test_data)) %>%
@@ -252,7 +264,9 @@ bind_rows(rf_summary, log_summary) %>%
   mutate(model = factor(model, levels = c("Random Forest", "Logistic Regression"))) %>%
   knitr::kable(caption = "Model Comparison Summary")
 ## Save the model
-saveRDS(log_fit, here("models", "log_baseline_model.rds"))
+saveRDS(log_fit, here("01_sup_pipeline", "sup_model_log_baseline.rds"))
+# ---
+
 # ---
 # Apply case weights to the Random Forest model
 ## Calculate case weights based on the target variable distribution
@@ -283,6 +297,7 @@ rf_wf_weighted <- workflow() %>%
 ## Fit the model with case weights
 rf_fit_weighted <- rf_wf_weighted %>%
   fit(data = train_data_weighted)
+# Evaluate the Random Forest model with case weights
 ## Check the model
 rf_preds_weighted <- predict(rf_fit_weighted, test_data_weighted, type = "prob") %>%
   bind_cols(predict(rf_fit_weighted, test_data_weighted)) %>%
@@ -325,7 +340,9 @@ bind_rows(rf_summary, log_summary, rf_summary_weighted) %>%
   mutate(model = factor(model, levels = c("Random Forest", "Logistic Regression", "Random Forest with Case Weights"))) %>%
   knitr::kable(caption = "Model Comparison Summary with Case Weights")
 ## Save model
-saveRDS(rf_fit_weighted, here("models", "rf_weighted_model.rds"))
+saveRDS(rf_fit_weighted, here("01_sup_pipeline", "sup_model_rf_weighted.rds"))
+# ---
+
 # ---
 # Hyperparameter tuning for Random Forest model
 library(tune)
@@ -344,6 +361,8 @@ rf_spec_tune <- rand_forest(
 ) %>%
   set_mode("classification") %>%
   set_engine("ranger", importance = "impurity")
+## Build the recipe
+rf_rec <- recipe(casualty_severity ~ ., data = train_data)
 ## Build the workflow for hyperparameter tuning
 rf_wf_tune <- workflow() %>%
   add_recipe(rf_rec) %>%
@@ -371,6 +390,8 @@ rf_wf_final <- rf_wf_tune %>%
 ## Fit the final model with the best hyperparameters
 rf_fit_final <- rf_wf_final %>%
   fit(data = train_data)
+
+# Evaluate the tuned Random Forest model
 ## Check the final model
 rf_preds_final <- predict(rf_fit_final, test_data, type = "prob") %>%
   bind_cols(predict(rf_fit_final, test_data)) %>%
@@ -413,5 +434,5 @@ bind_rows(rf_summary, log_summary, rf_summary_weighted, rf_summary_final) %>%
   mutate(model = factor(model, levels = c("Random Forest", "Logistic Regression", "Random Forest with Case Weights", "Final Random Forest"))) %>%
   knitr::kable(caption = "Model Comparison Summary with Final Random Forest Model")
 ## Save model
-saveRDS(rf_fit_final, here("models", "rf_final_model.rds"))
+saveRDS(rf_fit_final, here("01_sup_pipeline", "sup_model_rf_final.rds"))
 # ---
