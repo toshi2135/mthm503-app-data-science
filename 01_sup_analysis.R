@@ -52,6 +52,10 @@ summary(sup_data)
 DBI::dbDisconnect(conn)
 # ---
 # Data Preprocessing
+## Drop `obs_date` column
+sup_data <- sup_data %>% select(-obs_date)
+## Ensure the target variable is a factor
+sup_data$casualty_severity <- as.factor(sup_data$casualty_severity)
 ## Check the distribution of the target variable
 sup_data %>%
   count(casualty_severity) %>%
@@ -92,16 +96,20 @@ sup_data <- sup_data %>%
     sex_of_driver = as.factor(sex_of_driver),
     journey_purpose_of_driver = as.factor(journey_purpose_of_driver),
     vehicle_type = as.factor(vehicle_type),
+    hour_of_day = as.factor(hour_of_day),
     day_of_week = as.factor(day_of_week),
     is_weekend = as.factor(is_weekend)
   )
 ## Check the data again
 glimpse(sup_data)
+## Remove `accident_index` column
+sup_data <- sup_data %>% select(-accident_index)
 ## Split the data for train and test
 split <- initial_split(sup_data, strata = casualty_severity)
 train_data <- training(split)
+count(train_data)
 test_data <- testing(split)
-
+count(test_data)
 # ---
 # Build Random Forest baseline model
 library(ranger)
@@ -109,7 +117,7 @@ library(ranger)
 rf_rec <- recipe(casualty_severity ~ ., data = train_data)
 ## Build the model specification
 rf_spec <- rand_forest(trees = 500) %>%
-  set_engine("ranger") %>%
+  set_engine("ranger", importance = "impurity") %>%
   set_mode("classification")
 ## Build the workflow
 rf_wf <- workflow() %>%
@@ -155,6 +163,10 @@ rf_summary <- tibble(
 )
 rf_summary %>%
   knitr::kable(caption = "Random Forest Model Summary")
+## Find the importance of the features
+vip::vip(rf_fit, num_features = 10) +
+  labs(title = "Feature Importance for Random Forest Model") +
+  theme_minimal()
 # ---
 # Build Logistic Regression baseline model
 library(nnet)
