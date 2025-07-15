@@ -52,6 +52,10 @@ summary(sup_data)
 DBI::dbDisconnect(conn)
 # ---
 # Data Preprocessing
+## Drop `obs_date` column
+sup_data <- sup_data %>% select(-obs_date)
+## Ensure the target variable is a factor
+sup_data$casualty_severity <- as.factor(sup_data$casualty_severity)
 ## Check the distribution of the target variable
 sup_data %>%
   count(casualty_severity) %>%
@@ -92,16 +96,20 @@ sup_data <- sup_data %>%
     sex_of_driver = as.factor(sex_of_driver),
     journey_purpose_of_driver = as.factor(journey_purpose_of_driver),
     vehicle_type = as.factor(vehicle_type),
+    hour_of_day = as.factor(hour_of_day),
     day_of_week = as.factor(day_of_week),
     is_weekend = as.factor(is_weekend)
   )
 ## Check the data again
 glimpse(sup_data)
+## Remove `accident_index` column
+sup_data <- sup_data %>% select(-accident_index)
 ## Split the data for train and test
 split <- initial_split(sup_data, strata = casualty_severity)
 train_data <- training(split)
+count(train_data)
 test_data <- testing(split)
-
+count(test_data)
 # ---
 # Build Random Forest baseline model
 library(ranger)
@@ -109,7 +117,7 @@ library(ranger)
 rf_rec <- recipe(casualty_severity ~ ., data = train_data)
 ## Build the model specification
 rf_spec <- rand_forest(trees = 500) %>%
-  set_engine("ranger") %>%
+  set_engine("ranger", importance = "impurity") %>%
   set_mode("classification")
 ## Build the workflow
 rf_wf <- workflow() %>%
@@ -155,12 +163,15 @@ rf_summary <- tibble(
 )
 rf_summary %>%
   knitr::kable(caption = "Random Forest Model Summary")
+## Find the importance of the features
+vip::vip(rf_fit, num_features = 10) +
+  labs(title = "Feature Importance for Random Forest Model") +
+  theme_minimal()
 # ---
 # Build Logistic Regression baseline model
 library(nnet)
 ## Build the recipe
 log_rec <- recipe(casualty_severity ~ ., data = sup_data) %>%
-  step_rm(accident_index) %>%
   step_dummy(all_nominal_predictors()) %>%
   step_zv(all_predictors()) %>%
   step_normalize(all_numeric_predictors())
@@ -216,15 +227,74 @@ log_summary %>%
 bind_rows(rf_summary, log_summary) %>%
   mutate(model = factor(model, levels = c("Random Forest", "Logistic Regression"))) %>%
   knitr::kable(caption = "Model Comparison Summary")
-## Plot the model comparison
-model_comparison %>%
-  pivot_longer(-model, names_to = "metric", values_to = "value") %>%
-  ggplot(aes(x = model, y = value, fill = metric)) +
-  geom_col(position = "dodge") +
-  labs(title = "Model Comparison",
-       x = "Model",
-       y = "Value") +
-  theme_minimal() +
-  scale_fill_brewer(palette = "Set1")
 # ---
-# 
+# Apply case weights to the Random Forest model
+## Calculate case weights based on the target variable distribution
+class_weights <- sup_data %>%
+  count(casualty_severity) %>%
+  mutate(weight = 1 / n) %>%
+  select(casualty_severity, weight)
+## Join the case weights to the training data
+sup_data_weighted <- sup_data %>%
+  left_join(class_weights, by = "casualty_severity")
+## Split the weighted data for train and test
+split_weighted <- initial_split(sup_data_weighted, strata = casualty_severity)
+train_data_weighted <- training(split_weighted)
+count(train_data_weighted)
+test_data_weighted <- testing(split_weighted)
+count(test_data_weighted)
+## Build the recipe
+rf_rec_weighted <- recipe(casualty_severity ~ ., data = train_data_weighted) %>%
+  update_role(weight, new_role = "case_weight")
+## Build the model specification
+rf_spec_weighted <- rand_forest(trees = 500) %>%
+  set_engine("ranger", importance = "impurity") %>%
+  set_mode("classification")
+## Build the workflow
+rf_wf_weighted <- workflow() %>%
+  add_recipe(rf_rec_weighted) %>%
+  add_model(rf_spec_weighted)
+## Fit the model with case weights
+rf_fit_weighted <- rf_wf_weighted %>%
+  fit(data = train_data_weighted)
+## Check the model
+rf_preds_weighted <- predict(rf_fit_weighted, test_data_weighted, type = "prob") %>%
+  bind_cols(predict(rf_fit_weighted, test_data_weighted)) %>%
+  bind_cols(test_data_weighted)
+## Check the ROC curve
+roc_curve(rf_preds_weighted, truth = casualty_severity, .pred_Slight, .pred_Serious, .pred_Fatal) %>%
+  autoplot() +
+  labs(title = "ROC Curve for Random Forest Model with Case Weights",
+       x = "False Positive Rate",
+       y = "True Positive Rate") +
+  theme_minimal()
+## Check the confusion matrix
+conf_mat(rf_preds_weighted, truth = casualty_severity, estimate = .pred_class) %>%
+  autoplot(type = "heatmap") +
+  labs(title = "Confusion Matrix for Random Forest Model with Case Weights",
+       x = "Predicted",
+       y = "Actual") +
+  theme_minimal()
+## Check the accuracy, precision, recall, and F1 score
+rf_accuracy_weighted <- rf_preds_weighted %>%
+  accuracy(truth = casualty_severity, estimate = .pred_class)
+rf_precision_weighted <- rf_preds_weighted %>%
+  precision(truth = casualty_severity, estimate = .pred_class)
+rf_recall_weighted <- rf_preds_weighted %>%
+  recall(truth = casualty_severity, estimate = .pred_class)
+rf_f1_weighted <- rf_preds_weighted %>%
+  f_meas(truth = casualty_severity, estimate = .pred_class)
+## Create a summary table and show it
+rf_summary_weighted <- tibble(
+  model = "Random Forest with Case Weights",
+  accuracy = rf_accuracy_weighted$.estimate,
+  precision = rf_precision_weighted$.estimate,
+  recall = rf_recall_weighted$.estimate,
+  f1_score = rf_f1_weighted$.estimate
+)
+rf_summary_weighted %>%
+  knitr::kable(caption = "Random Forest Model with Case Weights Summary")
+## Create a summary table with all models
+bind_rows(rf_summary, log_summary, rf_summary_weighted) %>%
+  mutate(model = factor(model, levels = c("Random Forest", "Logistic Regression", "Random Forest with Case Weights"))) %>%
+  knitr::kable(caption = "Model Comparison Summary with Case Weights")
