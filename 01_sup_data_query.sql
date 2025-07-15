@@ -9,6 +9,9 @@ SELECT
 
   acc.weather_conditions,
   acc.light_conditions,
+  acc.road_surface_conditions,
+  acc.pedestrian_crossing_physical_facilities,
+  acc.carriageway_hazards,
   acc.urban_or_rural_area,
   acc.obs_date,
   EXTRACT(HOUR FROM acc.obs_date) AS hour_of_day,
@@ -23,7 +26,8 @@ SELECT
   veh.vehicle_type,
   veh.vehicle_manoeuvre,
   veh.age_of_vehicle,
-  veh.journey_purpose_of_driver
+  veh.journey_purpose_of_driver,
+  veh.driver_home_area_type
 
 FROM stats19_casualties cas
 

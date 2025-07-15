@@ -68,23 +68,32 @@ sup_data %>%
   pivot_longer(everything(), names_to = "variable", values_to = "missing_count") %>%
   filter(missing_count > 0) %>%
   arrange(desc(missing_count))
-## Drop columns with too many missing values
-sup_data <- sup_data %>% select(-vehicle_manoeuvre)
 ## Impute missing data
+### Impute NA features
+library(forcats)
+library(dplyr)
+sup_data <- sup_data %>%
+  mutate(
+    vehicle_manoeuvre = fct_na_value_to_level(vehicle_manoeuvre, level = "Missing"),
+    driver_home_area_type = fct_na_value_to_level(driver_home_area_type, level = "Missing"),
+    casualty_home_area_type = fct_na_value_to_level(casualty_home_area_type, level = "Missing"),
+    pedestrian_crossing_physical_facilities = fct_na_value_to_level(pedestrian_crossing_physical_facilities, level = "Missing"),
+    carriageway_hazards = fct_na_value_to_level(carriageway_hazards, level = "Missing"),
+    road_surface_conditions = fct_na_value_to_level(road_surface_conditions, level = "Missing"),
+    junction_detail = fct_na_value_to_level(junction_detail, level = "Missing"),
+    sex_of_casualty = fct_na_value_to_level(sex_of_casualty, level = "Missing")
+  )
 ### Impute `age_of_vehicle` with median
 median_age_vehicle <- median(sup_data$age_of_vehicle, na.rm = TRUE)
 sup_data <- sup_data %>%
   mutate(age_of_vehicle = if_else(is.na(age_of_vehicle), median_age_vehicle, age_of_vehicle))
-### Impute categorical variables with Unknown
-sup_data <- sup_data %>%
-  mutate(
-    casualty_home_area_type = fct_explicit_na(as.factor(casualty_home_area_type), na_level = "Missing"),
-    junction_detail = fct_explicit_na(as.factor(junction_detail), na_level = "Missing"),
-    sex_of_casualty = fct_explicit_na(as.factor(sex_of_casualty), na_level = "Missing")
-  )
 ## Check the data again
 glimpse(sup_data)
 summary(sup_data)
+sup_data %>%
+  summarise(across(everything(), ~ sum(is.na(.)))) %>%
+  pivot_longer(everything(), names_to = "var", values_to = "missing") %>%
+  filter(missing > 0)
 ## Encode categorical variables to factors
 sup_data <- sup_data %>%
   mutate(
@@ -100,10 +109,24 @@ sup_data <- sup_data %>%
     day_of_week = as.factor(day_of_week),
     is_weekend = as.factor(is_weekend)
   )
+sup_data <- sup_data %>%
+  mutate(
+    day_of_week = factor(day_of_week, levels = 0:6, 
+                         labels = c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday")),
+    is_weekend = factor(is_weekend, levels = c(0, 1), labels = c("Weekday", "Weekend")),
+    casualty_type = factor(casualty_type),
+    vehicle_type = factor(vehicle_type)
+  )
 ## Check the data again
 glimpse(sup_data)
+sup_data %>%
+  summarise(across(everything(), ~ sum(is.na(.)))) %>%
+  pivot_longer(everything(), names_to = "var", values_to = "missing") %>%
+  filter(missing > 0)
 ## Remove `accident_index` column
 sup_data <- sup_data %>% select(-accident_index)
+## Remove `casualty_type` column
+sup_data <- sup_data %>% select(-casualty_type)
 ## Split the data for train and test
 split <- initial_split(sup_data, strata = casualty_severity)
 train_data <- training(split)
@@ -171,10 +194,9 @@ vip::vip(rf_fit, num_features = 10) +
 # Build Logistic Regression baseline model
 library(nnet)
 ## Build the recipe
-log_rec <- recipe(casualty_severity ~ ., data = sup_data) %>%
-  step_dummy(all_nominal_predictors()) %>%
-  step_zv(all_predictors()) %>%
-  step_normalize(all_numeric_predictors())
+log_rec <- recipe(casualty_severity ~ ., data = train_data) %>%
+  step_normalize(all_numeric_predictors()) %>%
+  step_dummy(all_nominal_predictors())
 ## Build the model specification
 log_spec <- multinom_reg(penalty = 0) %>%
   set_engine("nnet") %>%
