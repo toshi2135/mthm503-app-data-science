@@ -5,8 +5,16 @@ library(targets)
 library(tarchetypes)
 library(here)
 
+# Source custom functions and data loading script
+source(here("01_sup_pipeline", "sup_load_data.R"))
+source(here("01_sup_pipeline", "sup_preprocess.R"))
+source(here("01_sup_pipeline", "sup_model_rf_baseline.R"))
+source(here("01_sup_pipeline", "sup_model_log.R"))
+source(here("01_sup_pipeline", "sup_model_rf_weighted.R"))
+source(here("01_sup_pipeline", "sup_model_rf_tuned.R"))
+
 # Define the targets for the supervised learning pipeline
-list(
+sup_targets <- list(
   # Load data
   tar_target(sup_raw_data, sup_load_data()),
   # Preprocess data
