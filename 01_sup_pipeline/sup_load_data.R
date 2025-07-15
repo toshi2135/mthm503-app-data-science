@@ -1,5 +1,7 @@
 # 01_sup_pipeline/sup_load_data.R
 
+source(here("R", "load_data.R"))
+
 sup_load_data <- function() {
   # Load environment variables in root directory, current folder is 01_sup_pipeline
   # so we need to go up one level to find .Renviron
@@ -11,14 +13,7 @@ sup_load_data <- function() {
   ## Check if the environment variables are set
   Sys.getenv("PGRHOST")
   ## Connect to the database
-  conn <- DBI::dbConnect(
-    RPostgres::Postgres(),
-    dbname = Sys.getenv("PGRDATABASE"),
-    host = Sys.getenv("PGRHOST"),
-    user = Sys.getenv("PGRUSER"),
-    password = Sys.getenv("PGRPASSWORD"),
-    port = Sys.getenv("PGRPORT")
-  )
+  conn <- get_db_connection()
   ## Check the connection
   DBI::dbIsValid(conn)
   ## Check the tables in the database
