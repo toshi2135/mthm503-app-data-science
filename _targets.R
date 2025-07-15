@@ -34,5 +34,9 @@ list(
     report,
     "vignettes/Report.Rmd"
   ),
-  sub_targets
+  is_CI <- Sys.getenv("CI") == "true",
+  if (is_CI != "true") {
+    # Production path
+    sub_targets
+    }
 )
