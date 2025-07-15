@@ -7,65 +7,51 @@ library(tidymodels)
 library(stats19)
 library(janitor)
 library(here)
-
-# Preprocessing data
-## Import R scripts
-# source(here("R/load_data.R"))
-
-## Load pedestrian casualty data from supabase
-# sup_data <- load_data()$sup
-
-## For now, use the stats19 package to load the data
-casualty_pedestrian <- get_stats19(
-  2022, 
-  type = "casualties", 
-  file_name = "dft-road-casualty-statistics-casualty-2022.csv") %>%
-  filter(casualty_type == "Pedestrian")
+# ---
+# Data querying
+## Use the .Renviron file to set the environment variables and connect to DB
+## Read .Renviron file
+readRenviron(".Renviron")
+## Check if the environment variables are set
+Sys.getenv("PGRHOST")
+## Connect to the database
+conn <- DBI::dbConnect(
+  RPostgres::Postgres(),
+  dbname = Sys.getenv("PGRDATABASE"),
+  host = Sys.getenv("PGRHOST"),
+  user = Sys.getenv("PGRUSER"),
+  password = Sys.getenv("PGRPASSWORD"),
+  port = Sys.getenv("PGRPORT")
+)
+## Check the connection
+DBI::dbIsValid(conn)
+## Check the tables in the database
+tables <- DBI::dbListTables(conn)
+tables
+## Check the first few rows of the casualty_pedestrian table
+casualty_pedestrian <- DBI::dbReadTable(conn, "stats19_casualties")
 names(casualty_pedestrian)
-accident <- get_stats19(
-  2022,
-  type = "accidents",
-  file_name = "dft-road-casualty-statistics-collision-2022.csv")
+glimpse(casualty_pedestrian)
+## Check the first few rows of the accident table
+accident <- DBI::dbReadTable(conn, "stats19_accidents")
 names(accident)
-vehicle <- get_stats19(
-  2022,
-  type = "vehicles",
-  file_name = "dft-road-casualty-statistics-vehicle-2022.csv")
+glimpse(accident)
+## Check the first few rows of the vehicle table
+vehicle <- DBI::dbReadTable(conn, "stats19_vehicles")
 names(vehicle)
-## Select the data
-### Select relevant columns from casualty_pedestrian
-casualty_sel <- casualty_pedestrian %>%
-  select(accident_index, casualty_severity, sex_of_casualty, age_of_casualty)
-### Check the data
-glimpse(casualty_sel)
-### Select relevant columns from accident
-accident_sel <- accident %>%
-  select(accident_index, weather_conditions, light_conditions, 
-         urban_or_rural_area, day_of_week, date, time)
-### Check the data
-glimpse(accident_sel)
-### Select relevant columns from vehicle
-vehicle_sel <- vehicle %>%
-  select(accident_index, sex_of_driver, age_of_driver) %>%
-  group_by(accident_index) %>%
-  slice(1) %>%
-  ungroup()
-### Check the data
-glimpse(vehicle_sel)
-## Join the data
-sup_data <- casualty_sel %>%
-  left_join(accident_sel, by = "accident_index") %>%
-  left_join(vehicle_sel, by = "accident_index") %>%
-  clean_names()
+glimpse(vehicle)
+## Read SQL query to join the tables
+sql_query <- readLines(here("01_sup_data_query.sql"))
+query <- paste(sql_query, collapse = "\n")
+sup_data <- dbGetQuery(conn, query)
 ## Check the data
+names(sup_data)
 glimpse(sup_data)
-## Convert time to hour
-library(lubridate)
-sup_data <- sup_data %>%
-  mutate(hour = hour(hm(time))) %>%
-  select(-time)
-## Check data
-glimpse(sup_data)
+summary(sup_data)
+## Close the connection
+DBI::dbDisconnect(conn)
+# ---
+# Data Preprocessing
 ## Check the distribution of the target variable
 sup_data %>%
   count(casualty_severity) %>%
@@ -225,10 +211,8 @@ log_summary <- tibble(
 log_summary %>%
   knitr::kable(caption = "Logistic Regression Model Summary")
 ## Create a summary table with both models
-model_comparison <- bind_rows(rf_summary, log_summary) %>%
-  mutate(model = factor(model, levels = c("Random Forest", "Logistic Regression")))
-## Show the comparison table
-model_comparison %>%
+bind_rows(rf_summary, log_summary) %>%
+  mutate(model = factor(model, levels = c("Random Forest", "Logistic Regression"))) %>%
   knitr::kable(caption = "Model Comparison Summary")
 ## Plot the model comparison
 model_comparison %>%
@@ -240,3 +224,5 @@ model_comparison %>%
        y = "Value") +
   theme_minimal() +
   scale_fill_brewer(palette = "Set1")
+# ---
+# 
