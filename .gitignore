@@ -57,3 +57,4 @@ _targets/
 # Renv files
 renv/library/
 renv_install.log
+.Rprofile
