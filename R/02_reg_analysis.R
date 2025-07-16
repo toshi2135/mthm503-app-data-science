@@ -182,3 +182,18 @@ binary_models <- lapply(methods, function(method) {
 binary_models_df <- do.call(rbind, binary_models)
 ## Check the binary models results
 binary_models_df
+# ---
+
+# Model diagnostics with Chi-squared test
+table_age <- table(fire_rescue_clean$age_band, fire_rescue_clean$extrication)
+chisq.test(table_age)
+table_sex <- table(fire_rescue_clean$sex, fire_rescue_clean$extrication)
+chisq.test(table_sex)
+# ---
+# Apply Poisson Regression Model
+model_poisson <- glm(
+  n_casualties ~ age_band + sex + extrication,
+  data = fire_rescue_clean,
+  family = poisson()
+)
+summary(model_poisson)
