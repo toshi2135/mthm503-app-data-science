@@ -1,5 +1,5 @@
 # 01_sup_pipeline/sup_preprocess.R
-sup_preprocess_data <- function(sup_data){
+sup_preprocess_data <- function(sup_data) {
   ## Drop `obs_date` column
   sup_data <- sup_data %>% select(-obs_date)
   ## Ensure the target variable is a factor
@@ -13,7 +13,11 @@ sup_preprocess_data <- function(sup_data){
   colSums(is.na(sup_data))
   sup_data %>%
     summarise(across(everything(), ~ sum(is.na(.)))) %>%
-    pivot_longer(everything(), names_to = "variable", values_to = "missing_count") %>%
+    pivot_longer(
+      everything(),
+      names_to = "variable",
+      values_to = "missing_count"
+    ) %>%
     filter(missing_count > 0) %>%
     arrange(desc(missing_count))
   ## Impute missing data
@@ -22,19 +26,49 @@ sup_preprocess_data <- function(sup_data){
   library(dplyr)
   sup_data <- sup_data %>%
     mutate(
-      vehicle_manoeuvre = fct_na_value_to_level(vehicle_manoeuvre, level = "Missing"),
-      driver_home_area_type = fct_na_value_to_level(driver_home_area_type, level = "Missing"),
-      casualty_home_area_type = fct_na_value_to_level(casualty_home_area_type, level = "Missing"),
-      pedestrian_crossing_physical_facilities = fct_na_value_to_level(pedestrian_crossing_physical_facilities, level = "Missing"),
-      carriageway_hazards = fct_na_value_to_level(carriageway_hazards, level = "Missing"),
-      road_surface_conditions = fct_na_value_to_level(road_surface_conditions, level = "Missing"),
-      junction_detail = fct_na_value_to_level(junction_detail, level = "Missing"),
-      sex_of_casualty = fct_na_value_to_level(sex_of_casualty, level = "Missing")
+      vehicle_manoeuvre = fct_na_value_to_level(
+        vehicle_manoeuvre,
+        level = "Missing"
+      ),
+      driver_home_area_type = fct_na_value_to_level(
+        driver_home_area_type,
+        level = "Missing"
+      ),
+      casualty_home_area_type = fct_na_value_to_level(
+        casualty_home_area_type,
+        level = "Missing"
+      ),
+      pedestrian_crossing_physical_facilities = fct_na_value_to_level(
+        pedestrian_crossing_physical_facilities,
+        level = "Missing"
+      ),
+      carriageway_hazards = fct_na_value_to_level(
+        carriageway_hazards,
+        level = "Missing"
+      ),
+      road_surface_conditions = fct_na_value_to_level(
+        road_surface_conditions,
+        level = "Missing"
+      ),
+      junction_detail = fct_na_value_to_level(
+        junction_detail,
+        level = "Missing"
+      ),
+      sex_of_casualty = fct_na_value_to_level(
+        sex_of_casualty,
+        level = "Missing"
+      )
     )
   ### Impute `age_of_vehicle` with median
   median_age_vehicle <- median(sup_data$age_of_vehicle, na.rm = TRUE)
   sup_data <- sup_data %>%
-    mutate(age_of_vehicle = if_else(is.na(age_of_vehicle), median_age_vehicle, age_of_vehicle))
+    mutate(
+      age_of_vehicle = if_else(
+        is.na(age_of_vehicle),
+        median_age_vehicle,
+        age_of_vehicle
+      )
+    )
   ## Check the data again
   glimpse(sup_data)
   summary(sup_data)
@@ -59,9 +93,24 @@ sup_preprocess_data <- function(sup_data){
     )
   sup_data <- sup_data %>%
     mutate(
-      day_of_week = factor(day_of_week, levels = 0:6, 
-                           labels = c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday")),
-      is_weekend = factor(is_weekend, levels = c(0, 1), labels = c("Weekday", "Weekend")),
+      day_of_week = factor(
+        day_of_week,
+        levels = 0:6,
+        labels = c(
+          "Sunday",
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday"
+        )
+      ),
+      is_weekend = factor(
+        is_weekend,
+        levels = c(0, 1),
+        labels = c("Weekday", "Weekend")
+      ),
       casualty_type = factor(casualty_type),
       vehicle_type = factor(vehicle_type)
     )
@@ -80,7 +129,7 @@ sup_preprocess_data <- function(sup_data){
   split <- initial_split(sup_data, strata = casualty_severity)
   train_data <- training(split)
   test_data <- testing(split)
-  
+
   ## Return the preprocessed data
   list(
     sup_data = sup_data,

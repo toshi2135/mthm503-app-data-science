@@ -69,7 +69,11 @@ sup_data %>% skimr::skim()
 colSums(is.na(sup_data))
 sup_data %>%
   summarise(across(everything(), ~ sum(is.na(.)))) %>%
-  pivot_longer(everything(), names_to = "variable", values_to = "missing_count") %>%
+  pivot_longer(
+    everything(),
+    names_to = "variable",
+    values_to = "missing_count"
+  ) %>%
   filter(missing_count > 0) %>%
   arrange(desc(missing_count))
 ## Impute missing data
@@ -78,19 +82,43 @@ library(forcats)
 library(dplyr)
 sup_data <- sup_data %>%
   mutate(
-    vehicle_manoeuvre = fct_na_value_to_level(vehicle_manoeuvre, level = "Missing"),
-    driver_home_area_type = fct_na_value_to_level(driver_home_area_type, level = "Missing"),
-    casualty_home_area_type = fct_na_value_to_level(casualty_home_area_type, level = "Missing"),
-    pedestrian_crossing_physical_facilities = fct_na_value_to_level(pedestrian_crossing_physical_facilities, level = "Missing"),
-    carriageway_hazards = fct_na_value_to_level(carriageway_hazards, level = "Missing"),
-    road_surface_conditions = fct_na_value_to_level(road_surface_conditions, level = "Missing"),
+    vehicle_manoeuvre = fct_na_value_to_level(
+      vehicle_manoeuvre,
+      level = "Missing"
+    ),
+    driver_home_area_type = fct_na_value_to_level(
+      driver_home_area_type,
+      level = "Missing"
+    ),
+    casualty_home_area_type = fct_na_value_to_level(
+      casualty_home_area_type,
+      level = "Missing"
+    ),
+    pedestrian_crossing_physical_facilities = fct_na_value_to_level(
+      pedestrian_crossing_physical_facilities,
+      level = "Missing"
+    ),
+    carriageway_hazards = fct_na_value_to_level(
+      carriageway_hazards,
+      level = "Missing"
+    ),
+    road_surface_conditions = fct_na_value_to_level(
+      road_surface_conditions,
+      level = "Missing"
+    ),
     junction_detail = fct_na_value_to_level(junction_detail, level = "Missing"),
     sex_of_casualty = fct_na_value_to_level(sex_of_casualty, level = "Missing")
   )
 ### Impute `age_of_vehicle` with median
 median_age_vehicle <- median(sup_data$age_of_vehicle, na.rm = TRUE)
 sup_data <- sup_data %>%
-  mutate(age_of_vehicle = if_else(is.na(age_of_vehicle), median_age_vehicle, age_of_vehicle))
+  mutate(
+    age_of_vehicle = if_else(
+      is.na(age_of_vehicle),
+      median_age_vehicle,
+      age_of_vehicle
+    )
+  )
 ## Check the data again
 glimpse(sup_data)
 summary(sup_data)
@@ -115,9 +143,24 @@ sup_data <- sup_data %>%
   )
 sup_data <- sup_data %>%
   mutate(
-    day_of_week = factor(day_of_week, levels = 0:6, 
-                         labels = c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday")),
-    is_weekend = factor(is_weekend, levels = c(0, 1), labels = c("Weekday", "Weekend")),
+    day_of_week = factor(
+      day_of_week,
+      levels = 0:6,
+      labels = c(
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday"
+      )
+    ),
+    is_weekend = factor(
+      is_weekend,
+      levels = c(0, 1),
+      labels = c("Weekday", "Weekend")
+    ),
     casualty_type = factor(casualty_type),
     vehicle_type = factor(vehicle_type)
   )
@@ -162,18 +205,28 @@ rf_preds <- predict(rf_fit, test_data, type = "prob") %>%
   bind_cols(predict(rf_fit, test_data)) %>%
   bind_cols(test_data)
 ## Check the ROC curve
-roc_curve(rf_preds, truth = casualty_severity, .pred_Slight, .pred_Serious, .pred_Fatal) %>%
+roc_curve(
+  rf_preds,
+  truth = casualty_severity,
+  .pred_Slight,
+  .pred_Serious,
+  .pred_Fatal
+) %>%
   autoplot() +
-  labs(title = "ROC Curve for Random Forest Model",
-       x = "False Positive Rate",
-       y = "True Positive Rate") +
+  labs(
+    title = "ROC Curve for Random Forest Model",
+    x = "False Positive Rate",
+    y = "True Positive Rate"
+  ) +
   theme_minimal()
 ## Check the confusion matrix
 conf_mat(rf_preds, truth = casualty_severity, estimate = .pred_class) %>%
   autoplot(type = "heatmap") +
-  labs(title = "Confusion Matrix for Random Forest Model",
-       x = "Predicted",
-       y = "Actual") +
+  labs(
+    title = "Confusion Matrix for Random Forest Model",
+    x = "Predicted",
+    y = "Actual"
+  ) +
   theme_minimal()
 ## Check the accuracy, precision, recall, and F1 score
 rf_accuracy <- rf_preds %>%
@@ -227,18 +280,28 @@ log_preds <- predict(log_fit, test_data, type = "prob") %>%
   bind_cols(predict(log_fit, test_data)) %>%
   bind_cols(test_data)
 ## Check the ROC curve
-roc_curve(log_preds, truth = casualty_severity, .pred_Slight, .pred_Serious, .pred_Fatal) %>%
+roc_curve(
+  log_preds,
+  truth = casualty_severity,
+  .pred_Slight,
+  .pred_Serious,
+  .pred_Fatal
+) %>%
   autoplot() +
-  labs(title = "ROC Curve for Logistic Regression Model",
-       x = "False Positive Rate",
-       y = "True Positive Rate") +
+  labs(
+    title = "ROC Curve for Logistic Regression Model",
+    x = "False Positive Rate",
+    y = "True Positive Rate"
+  ) +
   theme_minimal()
 ## Check the confusion matrix
 conf_mat(log_preds, truth = casualty_severity, estimate = .pred_class) %>%
   autoplot(type = "heatmap") +
-  labs(title = "Confusion Matrix for Logistic Regression Model",
-       x = "Predicted",
-       y = "Actual") +
+  labs(
+    title = "Confusion Matrix for Logistic Regression Model",
+    x = "Predicted",
+    y = "Actual"
+  ) +
   theme_minimal()
 ## Check the accuracy, precision, recall, and F1 score
 log_accuracy <- log_preds %>%
@@ -261,7 +324,9 @@ log_summary %>%
   knitr::kable(caption = "Logistic Regression Model Summary")
 ## Create a summary table with both models
 bind_rows(rf_summary, log_summary) %>%
-  mutate(model = factor(model, levels = c("Random Forest", "Logistic Regression"))) %>%
+  mutate(
+    model = factor(model, levels = c("Random Forest", "Logistic Regression"))
+  ) %>%
   knitr::kable(caption = "Model Comparison Summary")
 ## Save the model
 saveRDS(log_fit, here("01_sup_pipeline", "sup_model_log_baseline.rds"))
@@ -299,22 +364,40 @@ rf_fit_weighted <- rf_wf_weighted %>%
   fit(data = train_data_weighted)
 # Evaluate the Random Forest model with case weights
 ## Check the model
-rf_preds_weighted <- predict(rf_fit_weighted, test_data_weighted, type = "prob") %>%
+rf_preds_weighted <- predict(
+  rf_fit_weighted,
+  test_data_weighted,
+  type = "prob"
+) %>%
   bind_cols(predict(rf_fit_weighted, test_data_weighted)) %>%
   bind_cols(test_data_weighted)
 ## Check the ROC curve
-roc_curve(rf_preds_weighted, truth = casualty_severity, .pred_Slight, .pred_Serious, .pred_Fatal) %>%
+roc_curve(
+  rf_preds_weighted,
+  truth = casualty_severity,
+  .pred_Slight,
+  .pred_Serious,
+  .pred_Fatal
+) %>%
   autoplot() +
-  labs(title = "ROC Curve for Random Forest Model with Case Weights",
-       x = "False Positive Rate",
-       y = "True Positive Rate") +
+  labs(
+    title = "ROC Curve for Random Forest Model with Case Weights",
+    x = "False Positive Rate",
+    y = "True Positive Rate"
+  ) +
   theme_minimal()
 ## Check the confusion matrix
-conf_mat(rf_preds_weighted, truth = casualty_severity, estimate = .pred_class) %>%
+conf_mat(
+  rf_preds_weighted,
+  truth = casualty_severity,
+  estimate = .pred_class
+) %>%
   autoplot(type = "heatmap") +
-  labs(title = "Confusion Matrix for Random Forest Model with Case Weights",
-       x = "Predicted",
-       y = "Actual") +
+  labs(
+    title = "Confusion Matrix for Random Forest Model with Case Weights",
+    x = "Predicted",
+    y = "Actual"
+  ) +
   theme_minimal()
 ## Check the accuracy, precision, recall, and F1 score
 rf_accuracy_weighted <- rf_preds_weighted %>%
@@ -337,7 +420,16 @@ rf_summary_weighted %>%
   knitr::kable(caption = "Random Forest Model with Case Weights Summary")
 ## Create a summary table with all models
 bind_rows(rf_summary, log_summary, rf_summary_weighted) %>%
-  mutate(model = factor(model, levels = c("Random Forest", "Logistic Regression", "Random Forest with Case Weights"))) %>%
+  mutate(
+    model = factor(
+      model,
+      levels = c(
+        "Random Forest",
+        "Logistic Regression",
+        "Random Forest with Case Weights"
+      )
+    )
+  ) %>%
   knitr::kable(caption = "Model Comparison Summary with Case Weights")
 ## Save model
 saveRDS(rf_fit_weighted, here("01_sup_pipeline", "sup_model_rf_weighted.rds"))
@@ -379,7 +471,9 @@ rf_tune_results <- rf_wf_tune %>%
 rf_tune_results %>%
   collect_metrics() %>%
   arrange(desc(mean)) %>%
-  knitr::kable(caption = "Hyperparameter Tuning Results for Random Forest Model")
+  knitr::kable(
+    caption = "Hyperparameter Tuning Results for Random Forest Model"
+  )
 ## Select the best hyperparameters
 collect_metrics(rf_tune_results) %>% distinct(.metric)
 best_rf_params <- select_best(rf_tune_results, metric = "f_meas")
@@ -397,18 +491,28 @@ rf_preds_final <- predict(rf_fit_final, test_data, type = "prob") %>%
   bind_cols(predict(rf_fit_final, test_data)) %>%
   bind_cols(test_data)
 ## Check the ROC curve for the final model
-roc_curve(rf_preds_final, truth = casualty_severity, .pred_Slight, .pred_Serious, .pred_Fatal) %>%
+roc_curve(
+  rf_preds_final,
+  truth = casualty_severity,
+  .pred_Slight,
+  .pred_Serious,
+  .pred_Fatal
+) %>%
   autoplot() +
-  labs(title = "ROC Curve for Final Random Forest Model",
-       x = "False Positive Rate",
-       y = "True Positive Rate") +
+  labs(
+    title = "ROC Curve for Final Random Forest Model",
+    x = "False Positive Rate",
+    y = "True Positive Rate"
+  ) +
   theme_minimal()
 ## Check the confusion matrix for the final model
 conf_mat(rf_preds_final, truth = casualty_severity, estimate = .pred_class) %>%
   autoplot(type = "heatmap") +
-  labs(title = "Confusion Matrix for Final Random Forest Model",
-       x = "Predicted",
-       y = "Actual") +
+  labs(
+    title = "Confusion Matrix for Final Random Forest Model",
+    x = "Predicted",
+    y = "Actual"
+  ) +
   theme_minimal()
 ## Check the accuracy, precision, recall, and F1 score for the final model
 rf_accuracy_final <- rf_preds_final %>%
@@ -431,8 +535,20 @@ rf_summary_final %>%
   knitr::kable(caption = "Final Random Forest Model Summary")
 ## Create a summary table with all models including the final model
 bind_rows(rf_summary, log_summary, rf_summary_weighted, rf_summary_final) %>%
-  mutate(model = factor(model, levels = c("Random Forest", "Logistic Regression", "Random Forest with Case Weights", "Final Random Forest"))) %>%
-  knitr::kable(caption = "Model Comparison Summary with Final Random Forest Model")
+  mutate(
+    model = factor(
+      model,
+      levels = c(
+        "Random Forest",
+        "Logistic Regression",
+        "Random Forest with Case Weights",
+        "Final Random Forest"
+      )
+    )
+  ) %>%
+  knitr::kable(
+    caption = "Model Comparison Summary with Final Random Forest Model"
+  )
 ## Save model
 saveRDS(rf_fit_final, here("01_sup_pipeline", "sup_model_rf_final.rds"))
 # ---

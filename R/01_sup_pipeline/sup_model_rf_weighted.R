@@ -14,14 +14,18 @@ sup_rf_weighted_split <- function(sup_data) {
   train_data_weighted <- training(split_weighted)
   test_data_weighted <- testing(split_weighted)
   list(
-    train = train_data_weighted, 
-    test = test_data_weighted)
+    train = train_data_weighted,
+    test = test_data_weighted
+  )
 }
 
 sup_rf_weighted_fit <- function(train_data_weighted) {
   # Apply case weights to the Random Forest model
   ## Build the recipe
-  rf_rec_weighted <- recipe(casualty_severity ~ ., data = train_data_weighted) %>%
+  rf_rec_weighted <- recipe(
+    casualty_severity ~ .,
+    data = train_data_weighted
+  ) %>%
     update_role(weight, new_role = "case_weight")
   ## Build the model specification
   rf_spec_weighted <- rand_forest(trees = 500) %>%
@@ -35,28 +39,46 @@ sup_rf_weighted_fit <- function(train_data_weighted) {
   rf_fit_weighted <- rf_wf_weighted %>%
     fit(data = train_data_weighted)
   ## Return the fitted model and the weighted test data
-  return(rf_fit_weighted)
+  rf_fit_weighted
 }
 
 sup_rf_weighted_eval <- function(rf_fit_weighted, test_data_weighted) {
   # Evaluate the Random Forest model with case weights
   ## Check the model
-  rf_preds_weighted <- predict(rf_fit_weighted, test_data_weighted, type = "prob") %>%
+  rf_preds_weighted <- predict(
+    rf_fit_weighted,
+    test_data_weighted,
+    type = "prob"
+  ) %>%
     bind_cols(predict(rf_fit_weighted, test_data_weighted)) %>%
     bind_cols(test_data_weighted)
   ## Check the ROC curve
-  roc_curve(rf_preds_weighted, truth = casualty_severity, .pred_Slight, .pred_Serious, .pred_Fatal) %>%
+  roc_curve(
+    rf_preds_weighted,
+    truth = casualty_severity,
+    .pred_Slight,
+    .pred_Serious,
+    .pred_Fatal
+  ) %>%
     autoplot() +
-    labs(title = "ROC Curve for Random Forest Model with Case Weights",
-         x = "False Positive Rate",
-         y = "True Positive Rate") +
+    labs(
+      title = "ROC Curve for Random Forest Model with Case Weights",
+      x = "False Positive Rate",
+      y = "True Positive Rate"
+    ) +
     theme_minimal()
   ## Check the confusion matrix
-  conf_mat(rf_preds_weighted, truth = casualty_severity, estimate = .pred_class) %>%
+  conf_mat(
+    rf_preds_weighted,
+    truth = casualty_severity,
+    estimate = .pred_class
+  ) %>%
     autoplot(type = "heatmap") +
-    labs(title = "Confusion Matrix for Random Forest Model with Case Weights",
-         x = "Predicted",
-         y = "Actual") +
+    labs(
+      title = "Confusion Matrix for Random Forest Model with Case Weights",
+      x = "Predicted",
+      y = "Actual"
+    ) +
     theme_minimal()
   ## Check the accuracy, precision, recall, and F1 score
   rf_accuracy_weighted <- rf_preds_weighted %>%
@@ -80,6 +102,5 @@ sup_rf_weighted_eval <- function(rf_fit_weighted, test_data_weighted) {
   ## Save model
   saveRDS(rf_fit_weighted, here("01_sup_pipeline", "sup_model_rf_weighted.rds"))
   ## Return the summary
-  return(rf_summary_weighted)
-
+  rf_summary_weighted
 }
