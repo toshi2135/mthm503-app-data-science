@@ -50,6 +50,7 @@ sup_targets <- list(
     sup_rf_tuned_summary,
     sup_rf_tuned_eval(sup_rf_tuned_model, sup_test)
   ),
+  # Combine model summaries
   tar_target(
     sup_model_summary,
     bind_rows(

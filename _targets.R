@@ -13,13 +13,16 @@ tar_option_set(packages = c("dplyr", "DBI", "RPostgres"))
 # Detect CI environment
 is_CI <- Sys.getenv("CI", unset = "false") == "true"
 
-# Load supervised targets only if not in CI
+# Load production targets only if not in CI
 if (!is_CI) {
   message("✅ Loading supervised learning pipeline")
   source(here("R/01_sup_pipeline", "sup_targets.R")) # defines sup_targets
+  message("✅ Loading regression pipeline")
+  source(here("R/02_reg_pipeline", "reg_targets.R")) # defines reg_targets
 } else {
-  message("⏭️ Skipping supervised pipeline for CI")
+  message("⏭️ Skipping pipelines for CI")
   sup_targets <- list() # fallback
+  reg_targets <- list() # fallback
 }
 
 # Define the targets pipeline
@@ -40,5 +43,7 @@ list(
     report,
     "vignettes/Report.Rmd"
   ),
-  sup_targets
+  # Production pipelines
+  sup_targets,
+  reg_targets
 )
