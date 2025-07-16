@@ -3,6 +3,7 @@
 reg_preprocess_data <- function(fire_rescue_data) {
   # Data preprocessing
   library(dplyr)
+  age_band_levels <- c("0-16", "17-24", "25-39", "40-64", "65-74", "75+")
   fire_rescue_clean <- fire_rescue_data %>%
     filter(
       !is.na(extrication),
@@ -14,9 +15,7 @@ reg_preprocess_data <- function(fire_rescue_data) {
     mutate(
       extrication = factor(extrication),
       sex = factor(sex),
-      age_band = factor(age_band,
-                        levels = c("0-16", "17-24", "25-39", "40-64", "65-74", "75+"),
-                        ordered = TRUE
+      age_band = factor(age_band, levels = age_band_levels, ordered = TRUE
       )
     )
   str(fire_rescue_clean)
