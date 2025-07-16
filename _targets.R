@@ -20,8 +20,9 @@ if (!is_CI) {
   message("✅ Loading regression pipeline")
   source(here("R/02_reg_pipeline", "reg_targets.R")) # defines reg_targets
 } else {
-  message("⏭️ Skipping supervised pipeline for CI")
+  message("⏭️ Skipping pipelines for CI")
   sup_targets <- list() # fallback
+  reg_targets <- list() # fallback
 }
 
 # Define the targets pipeline
