@@ -16,10 +16,10 @@ is_CI <- Sys.getenv("CI", unset = "false") == "true"
 # Load supervised targets only if not in CI
 if (!is_CI) {
   message("✅ Loading supervised learning pipeline")
-  source(here("01_sup_pipeline", "sup_targets.R"))  # defines sup_targets
+  source(here("R/01_sup_pipeline", "sup_targets.R")) # defines sup_targets
 } else {
   message("⏭️ Skipping supervised pipeline for CI")
-  sup_targets <- list()  # fallback
+  sup_targets <- list() # fallback
 }
 
 # Define the targets pipeline
