@@ -44,7 +44,6 @@ DBI::dbDisconnect(conn)
 # ---
 # Data preprocessing
 library(dplyr)
-
 fire_rescue_clean <- fire_rescue_data %>%
   filter(
     !is.na(extrication),
@@ -76,7 +75,6 @@ fire_rescue_clean <- fire_rescue_clean %>%
   droplevels()
 ## Check the structure of the cleaned data
 str(fire_rescue_clean)
-
 ## Plot the data
 library(ggplot2)
 ggplot(fire_rescue_clean, aes(x = age_band, fill = extrication)) +
@@ -92,13 +90,95 @@ ggplot(fire_rescue_clean, aes(x = age_band, fill = extrication)) +
 
 # Statistical analysis using Multinomial GLM
 library(nnet)
-# Fit the Multinomial GLM
-model_multi <- multinom(extrication ~ age_band + sex + age_band:sex,
+## Fit the Multinomial GLM
+model_multi <- nnet::multinom(extrication ~ age_band + sex + age_band:sex,
   data = fire_rescue_clean
 )
-# Check the summary of the model
+## Check the summary of the model
 summary(model_multi)
-
 library(broom)
-# Tidy the model output
+## Tidy the model output
 tidy(model_multi, conf.int = TRUE, exponentiate = TRUE)
+## Check the model coefficients
+coef(model_multi)
+## Check the model residuals
+residuals(model_multi)
+# ---
+
+# Upgrade the model, use age_band as nominal factor instead of ordered factor
+## Change age_band to nominal factor
+fire_rescue_clean$age_band <- factor(fire_rescue_clean$age_band,
+  ordered = FALSE
+)
+## Fit the Multinomial GLM again
+library(nnet)
+model_multi2 <- nnet::multinom(extrication ~ age_band + sex + age_band:sex,
+  data = fire_rescue_clean
+)
+## Check the summary of the upgraded model
+summary(model_multi2)
+## Tidy the upgraded model output
+tidy(model_multi2, conf.int = TRUE, exponentiate = TRUE)
+## Check the model coefficients
+coef(model_multi2)
+## Check the model residuals
+residuals(model_multi2)
+## Compare the models
+AIC(model_multi)
+AIC(model_multi2)
+# ---
+
+# Apply Multinomial GAM model
+library(dplyr)
+library(VGAM)
+## Create numeric age_band variable
+fire_rescue_clean <- fire_rescue_clean %>%
+  mutate(age_band_num = as.numeric(age_band))
+## Fit the Multinomial GAM model
+model_gam_test_3df <- vglm(
+  extrication ~ sm.ns(age_band_num, df = 3),
+  family = multinomial,
+  data = fire_rescue_clean
+)
+## Check the summary of the Multinomial GAM model
+summary(model_gam_test_3df)
+
+## Change the level to 2 degrees of freedom
+model_gam_test_2df <- vglm(
+  extrication ~ sm.ns(age_band_num, df = 2),
+  family = multinomial,
+  data = fire_rescue_clean
+)
+## Check the summary of the Multinomial GAM model with 2 degrees of freedom
+summary(model_gam_test_2df)
+## Compare the models
+AIC(model_multi2)
+AIC(model_gam_test_3df)
+AIC(model_gam_test_2df)
+# ---
+
+# Apply Binomial Regression (Logistic Regression) Model
+library(dplyr)
+library(broom)
+## Create a function to fit a binary model for each extrication method
+make_binary_model <- function(df, method) {
+  df <- df %>%
+    mutate(
+      extricated = factor(ifelse(extrication == method, 1, 0), levels = c(0, 1))
+    )
+  model <- glm(
+    extricated ~ age_band + sex + age_band:sex,
+    data = df,
+    family = binomial(link = "logit")
+  )
+  broom::tidy(model, conf.int = TRUE, exponentiate = TRUE)
+}
+## Fit the binary model for each extrication method
+methods <- levels(fire_rescue_clean$extrication)
+binary_models <- lapply(methods, function(method) {
+  make_binary_model(fire_rescue_clean, method)
+})
+## Combine the results into a single data frame
+binary_models_df <- do.call(rbind, binary_models)
+## Check the binary models results
+binary_models_df
