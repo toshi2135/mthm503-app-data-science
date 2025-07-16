@@ -47,3 +47,12 @@ reg_preprocess_data <- function(fire_rescue_data) {
   # ---
   fire_rescue_clean
 }
+
+reg_update_data <- function(fire_rescue_clean) {
+  # Upgrade the data, use age_band as nominal factor instead of ordered factor
+  fire_rescue_clean$age_band <- factor(
+    fire_rescue_clean$age_band,
+    ordered = FALSE
+  )
+  fire_rescue_clean
+}
