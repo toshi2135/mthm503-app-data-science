@@ -1,16 +1,12 @@
 # 01_sup_pipeline/sup_load_data.R
 
 source(here("R", "load_data.R"))
-source(here("R", "utils.R"))
 
 sup_load_data <- function() {
-  # Load environment variables in root directory
-  # so we need to go up one level to find .Renviron
-  readRenviron(here("..", ".Renviron"))
   # Data querying
   ## Use the .Renviron file to set the environment variables and connect to DB
   ## Read .Renviron file
-  readRenviron(here("../", ".Renviron"))
+  readRenviron(here(".Renviron"))
   ## Check if the environment variables are set
   Sys.getenv("PGRHOST")
   ## Connect to the database
