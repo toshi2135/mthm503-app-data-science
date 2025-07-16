@@ -17,7 +17,7 @@ sup_rf_fit <- function(train_data) {
   rf_fit <- rf_wf %>%
     fit(data = train_data)
   ## Return the model
-  return(rf_fit)
+  rf_fit
 }
 
 sup_rf_eval <- function(rf_fit, test_data) {
@@ -76,5 +76,5 @@ sup_rf_eval <- function(rf_fit, test_data) {
   ## Save the model
   saveRDS(rf_fit, here("01_sup_pipeline", "sup_model_rf_baseline.rds"))
   ## Return the summary
-  return(rf_summary)
+  rf_summary
 }

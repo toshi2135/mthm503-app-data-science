@@ -39,7 +39,7 @@ sup_rf_weighted_fit <- function(train_data_weighted) {
   rf_fit_weighted <- rf_wf_weighted %>%
     fit(data = train_data_weighted)
   ## Return the fitted model and the weighted test data
-  return(rf_fit_weighted)
+  rf_fit_weighted
 }
 
 sup_rf_weighted_eval <- function(rf_fit_weighted, test_data_weighted) {
@@ -102,5 +102,5 @@ sup_rf_weighted_eval <- function(rf_fit_weighted, test_data_weighted) {
   ## Save model
   saveRDS(rf_fit_weighted, here("01_sup_pipeline", "sup_model_rf_weighted.rds"))
   ## Return the summary
-  return(rf_summary_weighted)
+  rf_summary_weighted
 }

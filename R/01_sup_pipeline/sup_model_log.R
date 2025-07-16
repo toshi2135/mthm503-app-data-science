@@ -3,6 +3,8 @@
 sup_log_fit <- function(train_data) {
   # Build Logistic Regression baseline model
   library(nnet)
+  library(tidyverse)
+  library(tidymodels)
   ## Build the recipe
   log_rec <- recipe(casualty_severity ~ ., data = train_data) %>%
     step_normalize(all_numeric_predictors()) %>%
@@ -19,7 +21,7 @@ sup_log_fit <- function(train_data) {
   log_fit <- log_wf %>%
     fit(data = train_data)
   ## Return the model
-  return(log_fit)
+  log_fit
 }
 
 sup_log_eval <- function(log_fit, test_data) {
@@ -74,5 +76,5 @@ sup_log_eval <- function(log_fit, test_data) {
   ## Save the model
   saveRDS(log_fit, here("01_sup_pipeline", "sup_model_log_baseline.rds"))
   ## Return the summary
-  return(log_summary)
+  log_summary
 }

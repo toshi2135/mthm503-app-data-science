@@ -1,9 +1,10 @@
 # 01_sup_pipeline/sup_load_data.R
 
 source(here("R", "load_data.R"))
+source(here("R", "utils.R"))
 
 sup_load_data <- function() {
-  # Load environment variables in root directory, current folder is 01_sup_pipeline
+  # Load environment variables in root directory
   # so we need to go up one level to find .Renviron
   readRenviron(here("..", ".Renviron"))
   # Data querying
@@ -42,5 +43,5 @@ sup_load_data <- function() {
   ## Close the connection
   DBI::dbDisconnect(conn)
   ## Return the data
-  return(sup_data)
+  sup_data
 }
