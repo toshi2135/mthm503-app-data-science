@@ -55,7 +55,8 @@ fire_rescue_clean <- fire_rescue_data %>%
   mutate(
     extrication = factor(extrication),
     sex = factor(sex),
-    age_band = factor(age_band,
+    age_band = factor(
+      age_band,
       levels = c("0-16", "17-24", "25-39", "40-64", "65-74", "75+"),
       ordered = TRUE
     )
@@ -91,7 +92,8 @@ ggplot(fire_rescue_clean, aes(x = age_band, fill = extrication)) +
 # Statistical analysis using Multinomial GLM
 library(nnet)
 ## Fit the Multinomial GLM
-model_multi <- nnet::multinom(extrication ~ age_band + sex + age_band:sex,
+model_multi <- nnet::multinom(
+  extrication ~ age_band + sex + age_band:sex,
   data = fire_rescue_clean
 )
 ## Check the summary of the model
@@ -107,12 +109,14 @@ residuals(model_multi)
 
 # Upgrade the model, use age_band as nominal factor instead of ordered factor
 ## Change age_band to nominal factor
-fire_rescue_clean$age_band <- factor(fire_rescue_clean$age_band,
+fire_rescue_clean$age_band <- factor(
+  fire_rescue_clean$age_band,
   ordered = FALSE
 )
 ## Fit the Multinomial GLM again
 library(nnet)
-model_multi2 <- nnet::multinom(extrication ~ age_band + sex + age_band:sex,
+model_multi2 <- nnet::multinom(
+  extrication ~ age_band + sex + age_band:sex,
   data = fire_rescue_clean
 )
 ## Check the summary of the upgraded model
@@ -190,8 +194,10 @@ chisq.test(table_age)
 table_sex <- table(fire_rescue_clean$sex, fire_rescue_clean$extrication)
 chisq.test(table_sex)
 # Chi-squared test to examine the association between age_band and extrication
-chisq_test_result <- chisq.test(table(fire_rescue_clean$age_band,
-                                      fire_rescue_clean$extrication))
+chisq_test_result <- chisq.test(table(
+  fire_rescue_clean$age_band,
+  fire_rescue_clean$extrication
+))
 
 # Print the results of the Chi-squared test
 print(chisq_test_result)

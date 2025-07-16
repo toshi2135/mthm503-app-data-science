@@ -23,8 +23,10 @@ reg_load_data <- function() {
   ## Check the first few rows
   head(fire_rescue)
   ## Check stats19_by_financial_year table
-  stats19_by_financial_year <- DBI::dbReadTable(conn,
-                                                "stats19_by_financial_year")
+  stats19_by_financial_year <- DBI::dbReadTable(
+    conn,
+    "stats19_by_financial_year"
+  )
   ## Check the structure of the data
   str(stats19_by_financial_year)
   ## Check the column names

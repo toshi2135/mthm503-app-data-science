@@ -15,8 +15,7 @@ reg_preprocess_data <- function(fire_rescue_data) {
     mutate(
       extrication = factor(extrication),
       sex = factor(sex),
-      age_band = factor(age_band, levels = age_band_levels, ordered = TRUE
-      )
+      age_band = factor(age_band, levels = age_band_levels, ordered = TRUE)
     )
   str(fire_rescue_clean)
   ## Check the levels of the factors
