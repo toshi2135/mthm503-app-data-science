@@ -73,8 +73,6 @@ sup_rf_eval <- function(rf_fit, test_data) {
   vip::vip(rf_fit, num_features = 10) +
     labs(title = "Feature Importance for Random Forest Model") +
     theme_minimal()
-  ## Save the model
-  saveRDS(rf_fit, here("01_sup_pipeline", "sup_model_rf_baseline.rds"))
   ## Return the summary
   rf_summary
 }
