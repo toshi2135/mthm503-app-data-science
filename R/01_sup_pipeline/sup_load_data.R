@@ -1,6 +1,7 @@
 # 01_sup_pipeline/sup_load_data.R
 
 source(here("R", "load_data.R"))
+source(here("R", "utils.R"))
 
 sup_load_data <- function() {
   # Load environment variables in root directory

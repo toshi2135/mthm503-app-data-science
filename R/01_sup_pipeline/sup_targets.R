@@ -4,16 +4,14 @@
 library(targets)
 library(tarchetypes)
 library(here)
-library(tidyverse)
-library(tidymodels)
 
 # Source custom functions and data loading script
-source(here("R/01_sup_pipeline", "sup_load_data.R"))
-source(here("R/01_sup_pipeline", "sup_preprocess.R"))
-source(here("R/01_sup_pipeline", "sup_model_rf_baseline.R"))
-source(here("R/01_sup_pipeline", "sup_model_log.R"))
-source(here("R/01_sup_pipeline", "sup_model_rf_weighted.R"))
-source(here("R/01_sup_pipeline", "sup_model_rf_tuned.R"))
+source(here("01_sup_pipeline", "sup_load_data.R"))
+source(here("01_sup_pipeline", "sup_preprocess.R"))
+source(here("01_sup_pipeline", "sup_model_rf_baseline.R"))
+source(here("01_sup_pipeline", "sup_model_log.R"))
+source(here("01_sup_pipeline", "sup_model_rf_weighted.R"))
+source(here("01_sup_pipeline", "sup_model_rf_tuned.R"))
 
 # Define the targets for the supervised learning pipeline
 sup_targets <- list(
@@ -53,7 +51,6 @@ sup_targets <- list(
     sup_rf_tuned_eval(sup_rf_tuned_model, sup_test)
   ),
 
-  # Combine all model summaries
   tar_target(
     sup_model_summary,
     bind_rows(

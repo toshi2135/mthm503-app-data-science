@@ -106,6 +106,8 @@ sup_rf_tuned_eval <- function(rf_fit_final, test_data) {
   )
   rf_summary_final %>%
     knitr::kable(caption = "Final Random Forest Model Summary")
+  ## Save model
+  saveRDS(rf_fit_final, here("01_sup_pipeline", "sup_model_rf_tuned.rds"))
   ## Return the summary for the final model
   rf_summary_final
 }
