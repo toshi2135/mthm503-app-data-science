@@ -12,6 +12,7 @@ source(here("R/01_sup_pipeline", "sup_model_rf_baseline.R"))
 source(here("R/01_sup_pipeline", "sup_model_log.R"))
 source(here("R/01_sup_pipeline", "sup_model_rf_weighted.R"))
 source(here("R/01_sup_pipeline", "sup_model_rf_tuned.R"))
+source(here("R/01_sup_pipeline", "sup_summary.R"))
 
 # Define the targets for the supervised learning pipeline
 sup_targets <- list(
