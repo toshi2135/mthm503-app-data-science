@@ -73,8 +73,6 @@ sup_log_eval <- function(log_fit, test_data) {
   )
   log_summary %>%
     knitr::kable(caption = "Logistic Regression Model Summary")
-  ## Save the model
-  saveRDS(log_fit, here("01_sup_pipeline", "sup_model_log_baseline.rds"))
   ## Return the summary
   log_summary
 }
