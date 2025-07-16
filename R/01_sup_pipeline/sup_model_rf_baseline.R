@@ -27,18 +27,28 @@ sup_rf_eval <- function(rf_fit, test_data) {
     bind_cols(predict(rf_fit, test_data)) %>%
     bind_cols(test_data)
   ## Check the ROC curve
-  roc_curve(rf_preds, truth = casualty_severity, .pred_Slight, .pred_Serious, .pred_Fatal) %>%
+  roc_curve(
+    rf_preds,
+    truth = casualty_severity,
+    .pred_Slight,
+    .pred_Serious,
+    .pred_Fatal
+  ) %>%
     autoplot() +
-    labs(title = "ROC Curve for Random Forest Model",
-         x = "False Positive Rate",
-         y = "True Positive Rate") +
+    labs(
+      title = "ROC Curve for Random Forest Model",
+      x = "False Positive Rate",
+      y = "True Positive Rate"
+    ) +
     theme_minimal()
   ## Check the confusion matrix
   conf_mat(rf_preds, truth = casualty_severity, estimate = .pred_class) %>%
     autoplot(type = "heatmap") +
-    labs(title = "Confusion Matrix for Random Forest Model",
-         x = "Predicted",
-         y = "Actual") +
+    labs(
+      title = "Confusion Matrix for Random Forest Model",
+      x = "Predicted",
+      y = "Actual"
+    ) +
     theme_minimal()
   ## Check the accuracy, precision, recall, and F1 score
   rf_accuracy <- rf_preds %>%

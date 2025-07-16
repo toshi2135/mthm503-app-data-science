@@ -25,32 +25,39 @@ sup_targets <- list(
 
   # Train and evaluate Random Forest baseline model
   tar_target(sup_rf_model, sup_rf_fit(sup_train)),
-  tar_target(sup_rf_summary, sup_rf_eval(sup_rf_model,
-                                         sup_test)),
+  tar_target(sup_rf_summary, sup_rf_eval(sup_rf_model, sup_test)),
 
   # Train and evaluate Logistic Regression model
   tar_target(sup_log_model, sup_log_fit(sup_train)),
-  tar_target(sup_log_summary, sup_log_eval(sup_log_model,
-                                           sup_test)),
+  tar_target(sup_log_summary, sup_log_eval(sup_log_model, sup_test)),
 
   # Train and evaluate Random Forest with weights
   tar_target(sup_split_weighted_data, sup_rf_weighted_split(sup_full_data)),
   tar_target(sup_train_weighted_data, sup_split_weighted_data$train),
   tar_target(sup_test_weighted_data, sup_split_weighted_data$test),
-  tar_target(sup_rf_weighted_model, sup_rf_weighted_fit(sup_train_weighted_data)),
-  tar_target(sup_rf_weighted_summary, sup_rf_weighted_eval(sup_rf_weighted_model, 
-                                                           sup_test_weighted_data)),
+  tar_target(
+    sup_rf_weighted_model,
+    sup_rf_weighted_fit(sup_train_weighted_data)
+  ),
+  tar_target(
+    sup_rf_weighted_summary,
+    sup_rf_weighted_eval(sup_rf_weighted_model, sup_test_weighted_data)
+  ),
 
   # Tune Random Forest model
   tar_target(sup_rf_tuned_model, sup_rf_tuned_fit(sup_train)),
-  tar_target(sup_rf_tuned_summary, sup_rf_tuned_eval(sup_rf_tuned_model, 
-                                                     sup_test)),
+  tar_target(
+    sup_rf_tuned_summary,
+    sup_rf_tuned_eval(sup_rf_tuned_model, sup_test)
+  ),
 
-  tar_target(sup_model_summary, bind_rows(
-    sup_rf_summary, 
-    sup_log_summary,
-    sup_rf_weighted_summary,
-    sup_rf_tuned_summary
+  tar_target(
+    sup_model_summary,
+    bind_rows(
+      sup_rf_summary,
+      sup_log_summary,
+      sup_rf_weighted_summary,
+      sup_rf_tuned_summary
     )
   )
 )

@@ -22,25 +22,35 @@ sup_log_fit <- function(train_data) {
   return(log_fit)
 }
 
-sup_log_eval <-function(log_fit, test_data) {
+sup_log_eval <- function(log_fit, test_data) {
   # Evaluate the model
   ## Check the model
   log_preds <- predict(log_fit, test_data, type = "prob") %>%
     bind_cols(predict(log_fit, test_data)) %>%
     bind_cols(test_data)
   ## Check the ROC curve
-  roc_curve(log_preds, truth = casualty_severity, .pred_Slight, .pred_Serious, .pred_Fatal) %>%
+  roc_curve(
+    log_preds,
+    truth = casualty_severity,
+    .pred_Slight,
+    .pred_Serious,
+    .pred_Fatal
+  ) %>%
     autoplot() +
-    labs(title = "ROC Curve for Logistic Regression Model",
-         x = "False Positive Rate",
-         y = "True Positive Rate") +
+    labs(
+      title = "ROC Curve for Logistic Regression Model",
+      x = "False Positive Rate",
+      y = "True Positive Rate"
+    ) +
     theme_minimal()
   ## Check the confusion matrix
   conf_mat(log_preds, truth = casualty_severity, estimate = .pred_class) %>%
     autoplot(type = "heatmap") +
-    labs(title = "Confusion Matrix for Logistic Regression Model",
-         x = "Predicted",
-         y = "Actual") +
+    labs(
+      title = "Confusion Matrix for Logistic Regression Model",
+      x = "Predicted",
+      y = "Actual"
+    ) +
     theme_minimal()
   ## Check the accuracy, precision, recall, and F1 score
   log_accuracy <- log_preds %>%

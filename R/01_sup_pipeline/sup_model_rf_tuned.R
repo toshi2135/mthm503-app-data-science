@@ -36,7 +36,9 @@ sup_rf_tuned_fit <- function(train_data) {
   rf_tune_results %>%
     collect_metrics() %>%
     arrange(desc(mean)) %>%
-    knitr::kable(caption = "Hyperparameter Tuning Results for Random Forest Model")
+    knitr::kable(
+      caption = "Hyperparameter Tuning Results for Random Forest Model"
+    )
   ## Select the best hyperparameters
   collect_metrics(rf_tune_results) %>% distinct(.metric)
   best_rf_params <- select_best(rf_tune_results, metric = "f_meas")
@@ -58,18 +60,32 @@ sup_rf_tuned_eval <- function(rf_fit_final, test_data) {
     bind_cols(predict(rf_fit_final, test_data)) %>%
     bind_cols(test_data)
   ## Check the ROC curve for the final model
-  roc_curve(rf_preds_final, truth = casualty_severity, .pred_Slight, .pred_Serious, .pred_Fatal) %>%
+  roc_curve(
+    rf_preds_final,
+    truth = casualty_severity,
+    .pred_Slight,
+    .pred_Serious,
+    .pred_Fatal
+  ) %>%
     autoplot() +
-    labs(title = "ROC Curve for Final Random Forest Model",
-         x = "False Positive Rate",
-         y = "True Positive Rate") +
+    labs(
+      title = "ROC Curve for Final Random Forest Model",
+      x = "False Positive Rate",
+      y = "True Positive Rate"
+    ) +
     theme_minimal()
   ## Check the confusion matrix for the final model
-  conf_mat(rf_preds_final, truth = casualty_severity, estimate = .pred_class) %>%
+  conf_mat(
+    rf_preds_final,
+    truth = casualty_severity,
+    estimate = .pred_class
+  ) %>%
     autoplot(type = "heatmap") +
-    labs(title = "Confusion Matrix for Final Random Forest Model",
-         x = "Predicted",
-         y = "Actual") +
+    labs(
+      title = "Confusion Matrix for Final Random Forest Model",
+      x = "Predicted",
+      y = "Actual"
+    ) +
     theme_minimal()
   ## Check the accuracy, precision, recall, and F1 score for the final model
   rf_accuracy_final <- rf_preds_final %>%
