@@ -344,8 +344,20 @@ plot(
   main = "Hierarchical Clustering Dendrogram"
 )
 abline(h = 10, col = "red", lty = 2)
-## Cut tree to get 4 clusters
-pca_data$hc_cluster <- cutree(hc_model, k = 5)
+## Choose the k for cutting the tree
+library(cluster)
+sil_vals <- numeric()
+for (k in 2:10) {
+  cluster_k <- cutree(hc_model, k = k)
+  sil <- silhouette(cluster_k, dist(pca_data[, 1:4]))
+  sil_vals[k] <- mean(sil[, 3])
+}
+plot(2:10, sil_vals[2:10], type = "b", pch = 19,
+     xlab = "Number of Clusters", ylab = "Average Silhouette Width")
+best_k <- which.max(sil_vals)
+cat("Best k based on silhouette score for Hierarchical Clustering:", best_k, "\n")
+## Cut tree to get k clusters
+pca_data$hc_cluster <- cutree(hc_model, k = best_k)
 ## Add into olive_oil data
 olive_oil$hc_cluster <- pca_data$hc_cluster
 ## Plot Hierarchical clusters on PC1 vs PC2
@@ -357,7 +369,6 @@ ggplot(pca_data, aes(x = PC1, y = PC2, color = as.factor(hc_cluster))) +
 table(pca_data$hc_cluster)
 aggregate(. ~ hc_cluster, data = olive_oil[, -1], FUN = mean)
 ## Return the Hierarchical clustering result
-hc_model = hc_model
 hc_model
 # ---
 
