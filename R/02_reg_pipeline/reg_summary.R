@@ -7,6 +7,4 @@ reg_summarise <- function(
   gam_2df_model,
   binom_models,
   poission
-) {
-  
-}
+) {}

@@ -8,7 +8,10 @@ reg_binom_fit <- function(fire_rescue_clean) {
   make_binary_model <- function(df, method) {
     df <- df %>%
       mutate(
-        extricated = factor(ifelse(extrication == method, 1, 0), levels = c(0, 1))
+        extricated = factor(
+          ifelse(extrication == method, 1, 0),
+          levels = c(0, 1)
+        )
       )
     glm(
       extricated ~ age_band + sex + age_band:sex,
