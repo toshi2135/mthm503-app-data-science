@@ -20,7 +20,11 @@ unsup_dbscan_apply <- function(num_components, pca_data) {
   ## Plot DBSCAN clusters on PC1 vs PC2
   ggplot(pca_data, aes(x = PC1, y = PC2, color = cluster)) +
     geom_point(alpha = 0.7, size = 2) +
-    labs(title = "DBSCAN Clustering on PCA (PC1 vs PC2)", x = "PC1", y = "PC2") +
+    labs(
+      title = "DBSCAN Clustering on PCA (PC1 vs PC2)",
+      x = "PC1",
+      y = "PC2"
+    ) +
     theme_minimal() +
     scale_color_brewer(palette = "Set1")
   ## Initial analysis of DBSCAN clusters
@@ -33,5 +37,5 @@ unsup_dbscan_apply <- function(num_components, pca_data) {
   list(
     dbscan_result = dbscan_result,
     dbscan_avg_silhouette = dbscan_avg_silhouette
-    )
+  )
 }

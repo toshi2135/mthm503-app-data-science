@@ -27,10 +27,20 @@ unsup_hier_apply <- function(pca_data) {
     sil <- silhouette(cluster_k, dist(pca_data[, 1:4]))
     sil_vals[k] <- mean(sil[, 3])
   }
-  plot(2:10, sil_vals[2:10], type = "b", pch = 19,
-       xlab = "Number of Clusters", ylab = "Average Silhouette Width")
+  plot(
+    2:10,
+    sil_vals[2:10],
+    type = "b",
+    pch = 19,
+    xlab = "Number of Clusters",
+    ylab = "Average Silhouette Width"
+  )
   best_k <- which.max(sil_vals)
-  cat("Best k based on silhouette score for Hierarchical Clustering:", best_k, "\n")
+  cat(
+    "Best k based on silhouette score for Hierarchical Clustering:",
+    best_k,
+    "\n"
+  )
   ## Cut tree to get k clusters
   pca_data$hc_cluster <- cutree(hc_model, k = best_k)
   ## Plot Hierarchical clusters on PC1 vs PC2
@@ -43,7 +53,11 @@ unsup_hier_apply <- function(pca_data) {
   ## Calculate the silhouette score for Hierarchical clusters
   hc_silhouette <- silhouette(pca_data$hc_cluster, dist(pca_data))
   hc_avg_silhouette <- mean(hc_silhouette[, 3])
-  cat("Average Silhouette Score for Hierarchical Clustering:", hc_avg_silhouette, "\n")
+  cat(
+    "Average Silhouette Score for Hierarchical Clustering:",
+    hc_avg_silhouette,
+    "\n"
+  )
   ## Return the Hierarchical clustering result
   hc_result <- pca_data$hc_cluster
   list(

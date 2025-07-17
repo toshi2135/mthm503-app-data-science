@@ -26,33 +26,48 @@ unsup_targets <- list(
   tar_target(unsup_clean_data, unsup_preprocess(unsup_raw_data)),
 
   # Perform PCA
-  tar_target(unsup_num_components, unsup_perform_pca(unsup_clean_data)$num_components),
+  tar_target(
+    unsup_num_components,
+    unsup_perform_pca(unsup_clean_data)$num_components
+  ),
   tar_target(unsup_pca_data, unsup_perform_pca(unsup_clean_data)$pca_data),
-  
+
   # Apply k-means clustering
   tar_target(
     unsup_kmeans_result,
     unsup_apply_kmeans_until_optimal(unsup_pca_data, max_k = 10)$best_km_result
   ),
-  tar_target(unsup_kmeans_sil_score, 
-             unsup_apply_kmeans_until_optimal(unsup_pca_data, max_k = 10)$silhouette_scores),
-  
+  tar_target(
+    unsup_kmeans_sil_score,
+    unsup_apply_kmeans_until_optimal(
+      unsup_pca_data,
+      max_k = 10
+    )$silhouette_scores
+  ),
+
   # Apply DBSCAN clustering
   tar_target(
     unsup_dbscan_result,
     unsup_dbscan_apply(unsup_num_components, unsup_pca_data)$dbscan_result
   ),
-  tar_target(unsup_dbscan_avg_sil_score, 
-             unsup_dbscan_apply(unsup_num_components, unsup_pca_data)$dbscan_avg_silhouette),
-  
+  tar_target(
+    unsup_dbscan_avg_sil_score,
+    unsup_dbscan_apply(
+      unsup_num_components,
+      unsup_pca_data
+    )$dbscan_avg_silhouette
+  ),
+
   # Apply Hierarchical clustering
   tar_target(
     unsup_hierarchical_result,
     unsup_hier_apply(unsup_pca_data)$hc_result
   ),
-  tar_target(unsup_hierarchical_avg_sil_score, 
-             unsup_hier_apply(unsup_pca_data)$hc_avg_silhouette),
-  
+  tar_target(
+    unsup_hierarchical_avg_sil_score,
+    unsup_hier_apply(unsup_pca_data)$hc_avg_silhouette
+  ),
+
   # Compare clustering results
   tar_target(
     unsup_summary,

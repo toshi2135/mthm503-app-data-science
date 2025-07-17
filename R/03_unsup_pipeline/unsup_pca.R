@@ -72,6 +72,7 @@ unsup_perform_pca <- function(olive_oil_scaled) {
   pca_data <- as.data.frame(pca_data)
   ## Return the number of components and the PCA data
   list(
-    num_components = num_components, 
-    pca_data = pca_data)
+    num_components = num_components,
+    pca_data = pca_data
+  )
 }
