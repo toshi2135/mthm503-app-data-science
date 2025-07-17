@@ -23,5 +23,5 @@ unsup_load_data <- function() {
   ## Check the summary of the data
   summary(olive_oil)
   # ---
-  olive_old
+  olive_oil
 }
