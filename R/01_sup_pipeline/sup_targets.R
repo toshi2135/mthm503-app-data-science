@@ -54,7 +54,7 @@ sup_targets <- list(
   # Combine model summaries
   tar_target(
     sup_model_summary,
-    bind_rows(
+    sup_summarise(
       sup_rf_summary,
       sup_log_summary,
       sup_rf_weighted_summary,
