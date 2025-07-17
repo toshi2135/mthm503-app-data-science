@@ -191,9 +191,46 @@ ggplot(pca_data, aes(x = PC1, y = PC2, color = cluster)) +
 table(pca_data$dbscan_cluster)
 aggregate(. ~ cluster, data = olive_oil[, -1], FUN = mean)
 # ---
-# Summarise the results
-cat("K-means (k=3) Average Silhouette Score:", avg_silhouette, "\n")
-cat("K-means (k=4) Average Silhouette Score:", avg_silhouette_4, "\n")
-cat("DBSCAN identified", length(unique(dbscan_result$cluster)), "clusters\n")
-cat("DBSCAN cluster sizes:\n")
-print(table(dbscan_result$cluster))
+
+# Apply Hierarchical Clustering
+set.seed(123)
+## Prepare the data
+hclust_data <- pca_data[, 1:4]
+## Compute distance matrix
+dist_mat <- dist(hclust_data)
+## Clustering using Ward method
+hc_model <- hclust(dist_mat, method = "ward.D2")
+## Plot dendrogram
+plot(hc_model, labels = FALSE, hang = -1,
+     main = "Hierarchical Clustering Dendrogram")
+abline(h = 10, col = "red", lty = 2)
+## Cut tree to get 4 clusters
+pca_data$hc_cluster <- cutree(hc_model, k = 4)
+## Add into olive_oil data
+olive_oil$hc_cluster <- pca_data$hc_cluster
+## Plot Hierarchical clusters on PC1 vs PC2
+ggplot(pca_data, aes(x = PC1, y = PC2, color = as.factor(hc_cluster))) +
+  geom_point(alpha = 0.7, size = 2) +
+  labs(title = "Hierarchical Clustering (k=4) on PCA", color = "Cluster") +
+  theme_minimal()
+## Initial analysis of Hierarchical clusters
+table(pca_data$hc_cluster)
+aggregate(. ~ hc_cluster, data = olive_oil[, -1], FUN = mean)
+# ---
+
+# Check the heatmap of the clusters
+library(tibble)
+## Prepare data for heatmap
+heatmap_data <- olive_oil %>%
+  group_by(hc_cluster) %>%
+  summarise(across(palmitic:eicosenoic, mean)) %>%
+  column_to_rownames("hc_cluster") %>%
+  as.matrix()
+## Plot the heatmap
+heatmap(heatmap_data,
+        Colv = NA, Rowv = NA,
+        scale = "column",
+        col = colorRampPalette(c("white", "orange", "red"))(100),
+        margins = c(8, 6),
+        main = "Heatmap of Fatty Acid Composition by Cluster")
+# ---
