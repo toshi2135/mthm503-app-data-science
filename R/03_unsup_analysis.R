@@ -6,7 +6,6 @@
 # Load libraries
 library(DBI)
 library(RPostgres)
-library(stats19)
 # Load load_data function
 source("R/load_data.R")
 # ---

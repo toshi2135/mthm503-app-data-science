@@ -9,8 +9,8 @@ library(here)
 
 # Define the targets for the supervised learning pipeline
 unsup_targets <- list(
-  # # Load data
-  # tar_target(unsup_raw_data, load_data()),
+  # Load data
+  tar_target(unsup_raw_data, load_data())
   # 
   # # Preprocess data
   # tar_target(unsup_clean_data, preprocess_data(unsup_raw_data)),
