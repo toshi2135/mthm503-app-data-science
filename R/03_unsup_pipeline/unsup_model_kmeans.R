@@ -3,24 +3,15 @@
 ## Build a function to apply k-means clustering
 unsup_apply_kmeans <- function(pca_data, optimal_k) {
   set.seed(123)
+  ## Ensure pca_data is a data frame
+  if (!is.data.frame(pca_data)) {
+    stop("pca_data must be a data frame.")
+  }
   ## Apply k-means clustering
   km_result <- kmeans(pca_data, centers = optimal_k, nstart = 25)
-  
-  ## Plot clusters on PCA components
-  pca_data$cluster <- as.factor(km_result$cluster)
   km_result
 }
-## Build a function to plot clusters
-unsup_plot_clusters <- function(pca_data, km_result, optimal_k) {
-  pca_data$cluster <- as.factor(km_result$cluster)
-  library(ggplot2)
-  cluster_plot <- ggplot(pca_data, aes(x = PC1, y = PC2, color = cluster)) +
-    geom_point(alpha = 0.7, size = 2) +
-    labs(title = paste("K-means Clustering with k =", optimal_k), x = "PC1", y = "PC2") +
-    theme_minimal() +
-    scale_color_brewer(palette = "Set1")
-  cluster_plot
-}
+
 ## Build a function to calculate silhouette score
 unsup_calculate_silhouette <- function(km_result, pca_data) {
   library(cluster)
@@ -52,5 +43,9 @@ unsup_apply_kmeans_until_optimal <- function(pca_data, max_k) {
   best_k <- unsup_choose_best_k(silhouette_scores)
   best_km_result <- unsup_apply_kmeans(pca_data, best_k)
   best_silhouette_scores <- unsup_calculate_silhouette(best_km_result, pca_data)
-  list(best_k, best_km_result, silhouette_scores)
+  list(
+    best_k = best_k,
+    best_km_result = best_km_result,
+    silhouette_scores = silhouette_scores
+  )
 }
