@@ -64,5 +64,5 @@ unsup_perform_pca <- function(olive_oil_scaled) {
   num_components <- which(cum_var_prop >= target_variance)[1]
   ## Reduce PCA dimensions to first 4 components
   pca_data <- as.data.frame(pca_result$x[, 1:num_components])
-  pca_data
+  list(num_components, pca_data)
 }
