@@ -11,6 +11,9 @@ source(here("R/03_unsup_pipeline", "unsup_eda.R"))
 source(here("R/03_unsup_pipeline", "unsup_preprocess.R"))
 source(here("R/03_unsup_pipeline", "unsup_pca.R"))
 source(here("R/03_unsup_pipeline", "unsup_model_kmeans.R"))
+source(here("R/03_unsup_pipeline", "unsup_model_dbscan.R"))
+source(here("R/03_unsup_pipeline", "unsup_model_hierarchical.R"))
+source(here("R/03_unsup_pipeline", "unsup_summary.R"))
 
 # Define the targets for the supervised learning pipeline
 unsup_targets <- list(
@@ -23,13 +26,44 @@ unsup_targets <- list(
   tar_target(unsup_clean_data, unsup_preprocess(unsup_raw_data)),
 
   # Perform PCA
-  tar_target(unsup_pca_results, unsup_perform_pca(unsup_clean_data)$pca_results),
+  tar_target(unsup_num_components, unsup_perform_pca(unsup_clean_data)$num_components),
+  tar_target(unsup_pca_data, unsup_perform_pca(unsup_clean_data)$pca_data),
   
   # Apply k-means clustering
   tar_target(
-    unsup_kmeans_results,
-    unsup_apply_kmeans_until_optimal(unsup_pca_results, max_k = 10)$best_km_result
-  )
+    unsup_kmeans_result,
+    unsup_apply_kmeans_until_optimal(unsup_pca_data, max_k = 10)$best_km_result
+  ),
+  tar_target(unsup_kmeans_sil_score, 
+             unsup_apply_kmeans_until_optimal(unsup_pca_data, max_k = 10)$silhouette_scores),
   
   # Apply DBSCAN clustering
+  tar_target(
+    unsup_dbscan_result,
+    unsup_dbscan_apply(unsup_num_components, unsup_pca_data)$dbscan_result
+  ),
+  tar_target(unsup_dbscan_avg_sil_score, 
+             unsup_dbscan_apply(unsup_num_components, unsup_pca_data)$dbscan_avg_silhouette),
+  
+  # Apply Hierarchical clustering
+  tar_target(
+    unsup_hierarchical_result,
+    unsup_hier_apply(unsup_pca_data)$hc_result
+  ),
+  tar_target(unsup_hierarchical_avg_sil_score, 
+             unsup_hier_apply(unsup_pca_data)$hc_avg_silhouette),
+  
+  # Compare clustering results
+  tar_target(
+    unsup_summary,
+    unsup_summarise(
+      unsup_pca_data,
+      unsup_kmeans_result,
+      unsup_kmeans_sil_score,
+      unsup_dbscan_result,
+      unsup_dbscan_avg_sil_score,
+      unsup_hierarchical_result,
+      unsup_hierarchical_avg_sil_score
+    )
+  )
 )
