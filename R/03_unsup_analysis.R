@@ -420,7 +420,7 @@ compare_clustering_results <- function(kmeans_result, dbscan_result, hierarchica
   print(results)
   
   # Return the results
-  return(results)
+  results
 }
 # Compare clustering results
 clustering_results <- compare_clustering_results(
