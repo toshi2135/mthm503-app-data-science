@@ -65,8 +65,31 @@ olive_oil_scaled <- olive_oil_clean %>%
   mutate(across(where(is.numeric), scale))
 ## Check the structure of the scaled data
 str(olive_oil_scaled)
-
 # ---
+
+
+# Check the heatmap of the clusters
+library(tibble)
+## Prepare data for heatmap
+heatmap_data <- olive_oil %>%
+  group_by(hc_cluster) %>%
+  summarise(across(palmitic:eicosenoic, mean)) %>%
+  column_to_rownames("hc_cluster") %>%
+  as.matrix()
+## Plot the heatmap
+heatmap_plot <- heatmap(
+  heatmap_data,
+  Colv = NA,
+  Rowv = NA,
+  scale = "column",
+  col = colorRampPalette(c("white", "orange", "red"))(100),
+  margins = c(8, 6),
+  main = "Heatmap of Fatty Acid Composition by Cluster"
+)
+## Return the heatmap plot
+heatmap_plot
+# ---
+
 # Reduce PCA dimensions
 library(stats)
 pca_result <- prcomp(olive_oil_scaled, center = TRUE, scale. = TRUE)
@@ -301,6 +324,8 @@ best_silhouette_scores <- result[[3]]
 ## Print the best k with silhouette score
 cat("Best k based on silhouette score:", best_k, "\n")
 cat("Best silhouette score:", max(best_silhouette_scores$silhouette_score), "\n")
+## Calculate the average silhouette score for the best k
+best_avg_silhouette <- unsup_calculate_silhouette(best_km_result, pca_data)
 # ---
 
 # Apply DBSCAN clustering
@@ -326,6 +351,10 @@ ggplot(pca_data, aes(x = PC1, y = PC2, color = cluster)) +
 ## Initial analysis of DBSCAN clusters
 table(pca_data$dbscan_cluster)
 aggregate(. ~ cluster, data = olive_oil[, -1], FUN = mean)
+## Calculate the silhouette score for DBSCAN clusters
+dbscan_silhouette <- silhouette(dbscan_result$cluster, dist(pca_data))
+dbscan_avg_silhouette <- mean(dbscan_silhouette[, 3])
+cat("Average Silhouette Score for DBSCAN:", dbscan_avg_silhouette, "\n")
 # ---
 
 # Apply Hierarchical Clustering
@@ -368,28 +397,35 @@ ggplot(pca_data, aes(x = PC1, y = PC2, color = as.factor(hc_cluster))) +
 ## Initial analysis of Hierarchical clusters
 table(pca_data$hc_cluster)
 aggregate(. ~ hc_cluster, data = olive_oil[, -1], FUN = mean)
+## Calculate the silhouette score for Hierarchical clusters
+hc_silhouette <- silhouette(pca_data$hc_cluster, dist(pca_data))
+hc_avg_silhouette <- mean(hc_silhouette[, 3])
+cat("Average Silhouette Score for Hierarchical Clustering:", hc_avg_silhouette, "\n")
 ## Return the Hierarchical clustering result
-hc_model
+hc_result <- pca_data$hc_cluster
 # ---
 
-# Check the heatmap of the clusters
-library(tibble)
-## Prepare data for heatmap
-heatmap_data <- olive_oil %>%
-  group_by(hc_cluster) %>%
-  summarise(across(palmitic:eicosenoic, mean)) %>%
-  column_to_rownames("hc_cluster") %>%
-  as.matrix()
-## Plot the heatmap
-heatmap_plot <- heatmap(
-  heatmap_data,
-  Colv = NA,
-  Rowv = NA,
-  scale = "column",
-  col = colorRampPalette(c("white", "orange", "red"))(100),
-  margins = c(8, 6),
-  main = "Heatmap of Fatty Acid Composition by Cluster"
+# Compare clustering results based on silhouette scores
+compare_clustering_results <- function(kmeans_result, dbscan_result, hierarchical_result) {
+  # Create a data frame to store the results
+  results <- data.frame(
+    Method = c("K-means", "DBSCAN", "Hierarchical"),
+    Silhouette_Score = c(
+      mean(silhouette(kmeans_result$cluster, dist(pca_data[, 1:4]))[, 3]),
+      mean(silhouette(dbscan_result$cluster, dist(pca_data[, 1:4]))[, 3]),
+      mean(silhouette(hierarchical_result, dist(pca_data[, 1:4]))[, 3])
+    )
+  )
+  
+  # Print the results
+  print(results)
+  
+  # Return the results
+  return(results)
+}
+# Compare clustering results
+clustering_results <- compare_clustering_results(
+  best_km_result,
+  dbscan_result,
+  hc_result
 )
-## Return the heatmap plot
-heatmap_plot
-# ---
