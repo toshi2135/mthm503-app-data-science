@@ -128,7 +128,8 @@ ggplot(pca_points, aes(x = PC2, y = PC3)) +
 target_variance <- 0.9
 ## Calculate the number of components needed to reach the target variance
 num_components <- which(cum_var_prop >= target_variance)[1]
-## Reduce PCA dimensions to first 4 components
+num_components # 4
+## Reduce PCA dimensions to the number of components
 pca_data <- as.data.frame(pca_result$x[, 1:num_components])
 pca_data
 # ---
@@ -154,7 +155,7 @@ plot(
 ## Calculate the optimal k using gap statistic
 library(cluster)
 set.seed(123)
-gap_stat <- clusGap(pca_data[, 1:4], FUN = kmeans, K.max = 10, B = 50)
+gap_stat <- clusGap(pca_data, FUN = kmeans, K.max = 10, B = 50)
 plot(gap_stat)
 which.max(gap_stat$Tab[, "gap"])
 gap_df <- as.data.frame(gap_stat$Tab)
@@ -230,16 +231,18 @@ silhouette_scores <- data.frame(k = integer(), silhouette_score = numeric())
 
 ## Choose k = 3 based on elbow plot and gap statistic
 # Apply k-means clustering with optimal k
-km_result <- unsup_apply_kmeans(pca_data, optimal_k)
+km_result_k3 <- unsup_apply_kmeans(pca_data, optimal_k)
+km_result_k3
 ## Plot clusters on PCA components
-unsup_plot_clusters(pca_data, km_result, optimal_k)
+unsup_plot_clusters(pca_data, km_result_k3, optimal_k)
 ## Calculate silhouette score
-silhouette_score <- unsup_calculate_silhouette(km_result, pca_data)
+silhouette_score <- unsup_calculate_silhouette(km_result_k3, pca_data)
 ## Add silhouette score to the data frame
 silhouette_scores <- unsup_add_silhouette_score(silhouette_scores, optimal_k, silhouette_score)
 ## Print silhouette score
 cat("Silhouette Score for k =", optimal_k, ":", silhouette_score, "\n")
-## Aggregate the data by cluster
+## Aggregate the data by cluster for k=3
+olive_oil$cluster <- km_result_k3$cluster
 aggregate(. ~ cluster, data = olive_oil[, -1], FUN = mean)
 
 ## Try with k=4
@@ -254,8 +257,8 @@ silhouette_score_k4 <- unsup_calculate_silhouette(km_result_k5, pca_data)
 silhouette_scores <- unsup_add_silhouette_score(silhouette_scores, optimal_k4, silhouette_score_k4)
 cat("Silhouette Score for k =", optimal_k4, ":", silhouette_score_k4, "\n")
 ## Aggregate the data by cluster for k=4
-olive_oil$cluster_k4 <- km_result_k4$cluster
-aggregate(. ~ cluster_k4, data = olive_oil[, -1], FUN = mean)
+olive_oil$cluster <- km_result_k4$cluster
+aggregate(. ~ cluster, data = olive_oil[, -1], FUN = mean)
 
 ## Try with k=5
 optimal_k5 <- optimal_k + 2
@@ -269,8 +272,8 @@ silhouette_score_k5 <- unsup_calculate_silhouette(km_result_k5, pca_data)
 silhouette_scores <- unsup_add_silhouette_score(silhouette_scores, optimal_k5, silhouette_score_k5)
 cat("Silhouette Score for k =", optimal_k5, ":", silhouette_score_k5, "\n")
 ## Aggregate the data by cluster for k=5
-olive_oil$cluster_k5 <- km_result_k5$cluster
-aggregate(. ~ cluster_k5, data = olive_oil[, -1], FUN = mean)
+olive_oil$cluster <- km_result_k5$cluster
+aggregate(. ~ cluster, data = olive_oil[, -1], FUN = mean)
 
 ## Try with k=6
 optimal_k6 <- optimal_k + 3
@@ -284,8 +287,8 @@ silhouette_score_k6 <- unsup_calculate_silhouette(km_result_k6, pca_data)
 silhouette_scores <- unsup_add_silhouette_score(silhouette_scores, optimal_k6, silhouette_score_k6)
 cat("Silhouette Score for k =", optimal_k6, ":", silhouette_score_k6, "\n")
 ## Aggregate the data by cluster for k=6
-olive_oil$cluster_k6 <- km_result_k6$cluster
-aggregate(. ~ cluster_k6, data = olive_oil[, -1], FUN = mean)
+olive_oil$cluster <- km_result_k6$cluster
+aggregate(. ~ cluster, data = olive_oil[, -1], FUN = mean)
 
 ## Use the function to loop through k and apply k-means clustering
 ### Get the number of k possible
@@ -304,9 +307,9 @@ cat("Best silhouette score:", max(best_silhouette_scores$silhouette_score), "\n"
 library(dbscan)
 set.seed(123)
 ## Get the data for DBSCAN
-dbscan_data <- pca_data[, 1:4]
+dbscan_data <- pca_data
 ## Determine min_pts for DBSCAN
-min_pts <- 5
+min_pts <- num_components + 1 # minPts = d + 1, where d is the number of dimensions
 ## Determine eps using kNNdistplot
 kNNdistplot(dbscan_data, k = min_pts)
 abline(h = 1.2, col = "red", lty = 2)
@@ -328,7 +331,7 @@ aggregate(. ~ cluster, data = olive_oil[, -1], FUN = mean)
 # Apply Hierarchical Clustering
 set.seed(123)
 ## Prepare the data
-hclust_data <- pca_data[, 1:4]
+hclust_data <- pca_data
 ## Compute distance matrix
 dist_mat <- dist(hclust_data)
 ## Clustering using Ward method
