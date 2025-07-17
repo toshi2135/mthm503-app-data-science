@@ -35,12 +35,12 @@ summary(olive_oil)
 library(ggplot2)
 library(tidyr)
 summary(olive_oil[, -1])
-olive_long <- olive_oil %>% 
+olive_long <- olive_oil %>%
   pivot_longer(cols = -id, names_to = "fatty_acid", values_to = "value")
 ## Plot the histogram of the fatty_acid column
 ggplot(olive_long, aes(x = value)) +
   geom_histogram(bins = 30, fill = "steelblue", color = "white") +
-  facet_wrap(~ fatty_acid, scales = "free", ncol = 3) +
+  facet_wrap(~fatty_acid, scales = "free", ncol = 3) +
   theme_minimal()
 ## Plot the scatter plot of the fatty_acid columns
 library(GGally)
@@ -75,27 +75,38 @@ summary(pca_result)
 pca_var <- pca_result$sdev^2
 pca_var_prop <- pca_var / sum(pca_var)
 ## Plot the scree plot
-plot(pca_var_prop, type = "b", pch = 19,
-     xlab = "Principal Component", ylab = "Proportion of Variance Explained",
-     main = "Scree Plot (base R)",
-     ylim = c(0, max(pca_var_prop) + 0.05))
+plot(
+  pca_var_prop,
+  type = "b",
+  pch = 19,
+  xlab = "Principal Component",
+  ylab = "Proportion of Variance Explained",
+  main = "Scree Plot (base R)",
+  ylim = c(0, max(pca_var_prop) + 0.05)
+)
 abline(h = 0.1, col = "red", lty = 2)
 ## Biplot of PCA
-biplot(pca_result, scale = 0,
-       cex = 0.6,
-       main = "Base R Biplot: PC1 vs PC2")
+biplot(pca_result, scale = 0, cex = 0.6, main = "Base R Biplot: PC1 vs PC2")
 ## Biplot of PCA using ggplot2
 pca_points <- as.data.frame(pca_result$x)
 pca_vars <- as.data.frame(pca_result$rotation)
 pca_vars$varname <- rownames(pca_vars)
 ggplot(pca_points, aes(x = PC1, y = PC2)) +
   geom_point(alpha = 0.5) +
-  geom_segment(data = pca_vars, aes(x = 0, y = 0, xend = PC1 * 5, yend = PC2 * 5), 
-               arrow = arrow(length = unit(0.2, "cm")), colour = "red") +
-  geom_text(data = pca_vars, aes(x = PC1 * 5, y = PC2 * 5, label = varname),
-            color = "red", vjust = -0.5, size = 3) +
-  labs(title = "Custom PCA Biplot",
-       x = "PC1", y = "PC2") +
+  geom_segment(
+    data = pca_vars,
+    aes(x = 0, y = 0, xend = PC1 * 5, yend = PC2 * 5),
+    arrow = arrow(length = unit(0.2, "cm")),
+    colour = "red"
+  ) +
+  geom_text(
+    data = pca_vars,
+    aes(x = PC1 * 5, y = PC2 * 5, label = varname),
+    color = "red",
+    vjust = -0.5,
+    size = 3
+  ) +
+  labs(title = "Custom PCA Biplot", x = "PC1", y = "PC2") +
   theme_minimal()
 ## Plot PCA individual plots (PC1-PC2 scatter)
 ggplot(pca_points, aes(x = PC1, y = PC2)) +
@@ -125,16 +136,18 @@ for (k in 1:10) {
   wss[k] <- km_out$tot.withinss
 }
 ## Plot the elbow method
-plot(1:10,
-     wss,
-     type = "b",
-     pch = 19,
-     xlab = "Number of Clusters (k)",
-     ylab = "Total Within-Cluster Sum of Squares",
-     main = "Elbow Method for Optimal k")
+plot(
+  1:10,
+  wss,
+  type = "b",
+  pch = 19,
+  xlab = "Number of Clusters (k)",
+  ylab = "Total Within-Cluster Sum of Squares",
+  main = "Elbow Method for Optimal k"
+)
 ## Choose k = 3 based on elbow plot
 optimal_k <- 3
-## Plot clusters on PCA components 
+## Plot clusters on PCA components
 km_result <- kmeans(pca_data[, 1:4], centers = optimal_k, nstart = 25)
 ## Plot clusters on PC1 vs PC2
 pca_data$cluster <- as.factor(km_result$cluster)
@@ -163,7 +176,13 @@ ggplot(pca_data, aes(x = PC1, y = PC2, color = cluster_4)) +
 ## Calculate silhouette score for k=4
 sil_score_4 <- silhouette(km_result_4$cluster, dist(pca_data[, 1:4]))
 avg_silhouette_4 <- mean(sil_score_4[, 3])
-cat("Average Silhouette Score for k =", optimal_k_4, "is", avg_silhouette_4, "\n")
+cat(
+  "Average Silhouette Score for k =",
+  optimal_k_4,
+  "is",
+  avg_silhouette_4,
+  "\n"
+)
 ## Check the average values of original features per cluster for k=4
 olive_oil$cluster_4 <- km_result_4$cluster
 aggregate(. ~ cluster_4, data = olive_oil[, -1], FUN = mean)
@@ -201,8 +220,12 @@ dist_mat <- dist(hclust_data)
 ## Clustering using Ward method
 hc_model <- hclust(dist_mat, method = "ward.D2")
 ## Plot dendrogram
-plot(hc_model, labels = FALSE, hang = -1,
-     main = "Hierarchical Clustering Dendrogram")
+plot(
+  hc_model,
+  labels = FALSE,
+  hang = -1,
+  main = "Hierarchical Clustering Dendrogram"
+)
 abline(h = 10, col = "red", lty = 2)
 ## Cut tree to get 4 clusters
 pca_data$hc_cluster <- cutree(hc_model, k = 4)
@@ -227,10 +250,13 @@ heatmap_data <- olive_oil %>%
   column_to_rownames("hc_cluster") %>%
   as.matrix()
 ## Plot the heatmap
-heatmap(heatmap_data,
-        Colv = NA, Rowv = NA,
-        scale = "column",
-        col = colorRampPalette(c("white", "orange", "red"))(100),
-        margins = c(8, 6),
-        main = "Heatmap of Fatty Acid Composition by Cluster")
+heatmap(
+  heatmap_data,
+  Colv = NA,
+  Rowv = NA,
+  scale = "column",
+  col = colorRampPalette(c("white", "orange", "red"))(100),
+  margins = c(8, 6),
+  main = "Heatmap of Fatty Acid Composition by Cluster"
+)
 # ---
