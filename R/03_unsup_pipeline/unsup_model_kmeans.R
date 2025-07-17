@@ -1,14 +1,10 @@
 # 03_unsup_pipeline/unsup_model_kmeans.R
 
 ## Build a function to apply k-means clustering
-unsup_apply_kmeans <- function(pca_data, optimal_k) {
+unsup_apply_kmeans <- function(pca_data, k) {
   set.seed(123)
-  ## Ensure pca_data is a data frame
-  if (!is.data.frame(pca_data)) {
-    stop("pca_data must be a data frame.")
-  }
   ## Apply k-means clustering
-  km_result <- kmeans(pca_data, centers = optimal_k, nstart = 25)
+  km_result <- kmeans(pca_data, centers = k, nstart = 25)
   km_result
 }
 
@@ -36,9 +32,9 @@ unsup_choose_best_k <- function(silhouette_scores) {
   best_k
 }
 ## Build a function to apply k-means until max_k to find optimal k
-unsup_apply_optimal_kmeans <- function(pca_data, max_k) {
+unsup_apply_optimal_kmeans <- function(pca_data) {
+  max_k = 10
   silhouette_scores <- data.frame(k = integer(), silhouette_score = numeric())
-
   for (k in 2:max_k) {
     km_result <- unsup_apply_kmeans(pca_data, k)
     avg_silhouette <- unsup_calculate_silhouette(km_result, pca_data)

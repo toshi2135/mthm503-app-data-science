@@ -6,6 +6,7 @@
 # Load libraries
 library(DBI)
 library(RPostgres)
+library(here)
 # Load load_data function
 source("R/load_data.R")
 # ---
@@ -28,6 +29,14 @@ str(olive_oil)
 dplyr::glimpse(olive_oil)
 ## Check the summary of the data
 summary(olive_oil)
+## Retrieve data using SQL query
+sql_query <- readLines(here("sql", "03_unsup_data_query.sql"))
+query <- paste(sql_query, collapse = "\n")
+olive_oil <- DBI::dbGetQuery(conn, query)
+## Check the first few rows of the data
+head(olive_oil)
+## Close the connection
+DBI::dbDisconnect(conn)
 # ---
 
 # Exploratory Data Analysis
