@@ -46,6 +46,6 @@ reg_targets <- list(
       gam_2df_model = reg_gam_model_2df,
       binom_models = reg_binom_models,
       poission = reg_poisson_model
-      )
     )
+  )
 )

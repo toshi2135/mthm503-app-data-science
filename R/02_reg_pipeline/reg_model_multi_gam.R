@@ -36,4 +36,3 @@ reg_gam_fit_2df <- function(fire_rescue_clean) {
   summary(model_gam_2df)
   model_gam_2df
 }
-
