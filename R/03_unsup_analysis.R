@@ -396,7 +396,6 @@ ggplot(pca_data, aes(x = PC1, y = PC2, color = as.factor(hc_cluster))) +
   theme_minimal()
 ## Initial analysis of Hierarchical clusters
 table(pca_data$hc_cluster)
-aggregate(. ~ hc_cluster, data = olive_oil[, -1], FUN = mean)
 ## Calculate the silhouette score for Hierarchical clusters
 hc_silhouette <- silhouette(pca_data$hc_cluster, dist(pca_data))
 hc_avg_silhouette <- mean(hc_silhouette[, 3])
