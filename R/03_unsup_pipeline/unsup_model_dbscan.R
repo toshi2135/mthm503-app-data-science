@@ -1,13 +1,15 @@
 # 03_unsup_pipeline/unsup_model_dbscan.R
 
-unsup_dbscan_apply <- function(pca_data) {
+unsup_dbscan_apply <- function(num_components, pca_data) {
   # Apply DBSCAN clustering
   library(dbscan)
   set.seed(123)
   ## Get the data for DBSCAN
-  dbscan_data <- pca_data[, 1:4]
+  dbscan_data <- pca_data
+  ## Determine min_pts for DBSCAN
+  min_pts <- num_components + 1 # minPts = d + 1, where d is the number of dimensions
   ## Determine eps using kNNdistplot
-  kNNdistplot(dbscan_data, k = 4)
+  kNNdistplot(dbscan_data, k = min_pts)
   abline(h = 1.2, col = "red", lty = 2)
   title(main = "kNN Distance Plot (k=4) for DBSCAN eps selection")
   ## Apply DBSCAN with eps = 1.2 and minPts = 4
