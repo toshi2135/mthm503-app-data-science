@@ -1,6 +1,8 @@
 # 03_unsup_pipeline/unsup_model_hierarchical.R
 
 unsup_hier_apply <- function(pca_data) {
+  library(ggplot2)
+  library(cluster)
   # Apply Hierarchical Clustering
   set.seed(123)
   ## Prepare the data
@@ -31,8 +33,6 @@ unsup_hier_apply <- function(pca_data) {
   cat("Best k based on silhouette score for Hierarchical Clustering:", best_k, "\n")
   ## Cut tree to get k clusters
   pca_data$hc_cluster <- cutree(hc_model, k = best_k)
-  ## Add into olive_oil data
-  olive_oil$hc_cluster <- pca_data$hc_cluster
   ## Plot Hierarchical clusters on PC1 vs PC2
   ggplot(pca_data, aes(x = PC1, y = PC2, color = as.factor(hc_cluster))) +
     geom_point(alpha = 0.7, size = 2) +
@@ -40,7 +40,14 @@ unsup_hier_apply <- function(pca_data) {
     theme_minimal()
   ## Initial analysis of Hierarchical clusters
   table(pca_data$hc_cluster)
-  aggregate(. ~ hc_cluster, data = olive_oil[, -1], FUN = mean)
+  ## Calculate the silhouette score for Hierarchical clusters
+  hc_silhouette <- silhouette(pca_data$hc_cluster, dist(pca_data))
+  hc_avg_silhouette <- mean(hc_silhouette[, 3])
+  cat("Average Silhouette Score for Hierarchical Clustering:", hc_avg_silhouette, "\n")
   ## Return the Hierarchical clustering result
-  hc_model
+  hc_result <- pca_data$hc_cluster
+  list(
+    hc_result = hc_result,
+    hc_avg_silhouette = hc_avg_silhouette
+  )
 }
