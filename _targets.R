@@ -19,10 +19,13 @@ if (!is_CI) {
   source(here("R/01_sup_pipeline", "sup_targets.R")) # defines sup_targets
   message("✅ Loading regression pipeline")
   source(here("R/02_reg_pipeline", "reg_targets.R")) # defines reg_targets
+  message("✅ Loading unsupervised learning pipeline")
+  source(here("R/03_unsup_pipeline", "unsup_targets.R")) # defines unsup_targets
 } else {
   message("⏭️ Skipping pipelines for CI")
   sup_targets <- list() # fallback
   reg_targets <- list() # fallback
+  unsup_targets <- list() # fallback
 }
 
 # Define the targets pipeline
@@ -45,5 +48,6 @@ list(
   ),
   # Production pipelines
   sup_targets,
-  reg_targets
+  reg_targets,
+  unsup_targets
 )
