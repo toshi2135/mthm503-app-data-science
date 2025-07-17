@@ -3,6 +3,8 @@
 unsup_dbscan_apply <- function(num_components, pca_data) {
   # Apply DBSCAN clustering
   library(dbscan)
+  library(ggplot2)
+  library(cluster)
   set.seed(123)
   ## Get the data for DBSCAN
   dbscan_data <- pca_data
@@ -23,7 +25,13 @@ unsup_dbscan_apply <- function(num_components, pca_data) {
     scale_color_brewer(palette = "Set1")
   ## Initial analysis of DBSCAN clusters
   table(pca_data$dbscan_cluster)
-  aggregate(. ~ cluster, data = olive_oil[, -1], FUN = mean)
+  ## Calculate the silhouette score for DBSCAN clusters
+  dbscan_silhouette <- silhouette(dbscan_result$cluster, dist(pca_data))
+  dbscan_avg_silhouette <- mean(dbscan_silhouette[, 3])
+  cat("Average Silhouette Score for DBSCAN:", dbscan_avg_silhouette, "\n")
   ## Return the DBSCAN result
-  dbscan_result
+  list(
+    dbscan_result = dbscan_result,
+    dbscan_avg_silhouette = dbscan_avg_silhouette
+    )
 }
