@@ -252,7 +252,7 @@ km_result_k4 <- unsup_apply_kmeans(pca_data, optimal_k4)
 ## Plot clusters on PCA components for k=4
 unsup_plot_clusters(pca_data, km_result_k4, optimal_k4)
 ## Calculate silhouette score for k=4
-silhouette_score_k4 <- unsup_calculate_silhouette(km_result_k5, pca_data)
+silhouette_score_k4 <- unsup_calculate_silhouette(km_result_k4, pca_data)
 ## Add silhouette score for k=4 to the data frame
 silhouette_scores <- unsup_add_silhouette_score(silhouette_scores, optimal_k4, silhouette_score_k4)
 cat("Silhouette Score for k =", optimal_k4, ":", silhouette_score_k4, "\n")
@@ -303,6 +303,7 @@ cat("Best k based on silhouette score:", best_k, "\n")
 cat("Best silhouette score:", max(best_silhouette_scores$silhouette_score), "\n")
 ## Calculate the average silhouette score for the best k
 best_avg_silhouette <- unsup_calculate_silhouette(best_km_result, pca_data)
+cat("Average Silhouette Score for best k:", best_avg_silhouette, "\n")
 # ---
 
 # Apply DBSCAN clustering
@@ -382,26 +383,42 @@ hc_result <- pca_data$hc_cluster
 # ---
 
 # Compare clustering results based on silhouette scores
-compare_clustering_results <- function(kmeans_result, dbscan_result, hierarchical_result) {
-  # Create a data frame to store the results
-  results <- data.frame(
-    Method = c("K-means", "DBSCAN", "Hierarchical"),
-    Silhouette_Score = c(
-      mean(silhouette(kmeans_result$cluster, dist(pca_data[, 1:4]))[, 3]),
-      mean(silhouette(dbscan_result$cluster, dist(pca_data[, 1:4]))[, 3]),
-      mean(silhouette(hierarchical_result, dist(pca_data[, 1:4]))[, 3])
-    )
-  )
-  
-  # Print the results
-  print(results)
-  
-  # Return the results
-  results
-}
-# Compare clustering results
-clustering_results <- compare_clustering_results(
-  best_km_result,
-  dbscan_result,
-  hc_result
+str(pca_data)
+str(best_km_result)
+str(dbscan_result)
+str(hc_result)
+km_sil_score <- best_avg_silhouette
+km_sil_score
+dbscan_sil_score <- dbscan_avg_silhouette
+dbscan_sil_score
+hc_sil_score <- hc_avg_silhouette
+hc_sil_score
+## Create a summary data frame to compare methods using average silhouette scores and number of clusters
+library(dplyr)
+## Calculate the number of clusters for each method
+km_clusters <- length(unique(best_km_result$cluster))
+km_clusters
+dbscan_clusters <- length(unique(dbscan_result$cluster))
+dbscan_clusters
+hc_clusters <- length(unique(hc_result))
+hc_clusters
+## Create a summary data frame
+results <- data.frame(
+  Method = c("K-means", "DBSCAN", "Hierarchical"),
+  Avg_Silhouette_Score = c(km_sil_score, dbscan_sil_score, hc_sil_score),
+  Num_Clusters = c(km_clusters, dbscan_clusters, hc_clusters)
 )
+results
+# Create a summary of the unsupervised analysis
+unsup_summary <- unsup_summarise(
+  pca_data,
+  best_km_result,
+  km_sil_score,
+  dbscan_result,
+  dbscan_sil_score,
+  hc_result,
+  hc_sil_score
+)
+
+## Print the unsupervised analysis summary
+print(unsup_summary)
