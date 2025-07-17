@@ -9,7 +9,8 @@ unsup_dbscan_apply <- function(num_components, pca_data) {
   ## Get the data for DBSCAN
   dbscan_data <- pca_data
   ## Determine min_pts for DBSCAN
-  min_pts <- num_components + 1 # minPts = d + 1, where d is the number of dimensions
+  min_pts <- num_components + 1
+  ## minPts = d + 1, where d is the number of dimensions
   ## Determine eps using kNNdistplot
   kNNdistplot(dbscan_data, k = min_pts)
   abline(h = 1.2, col = "red", lty = 2)

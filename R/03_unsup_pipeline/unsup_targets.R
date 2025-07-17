@@ -35,11 +35,11 @@ unsup_targets <- list(
   # Apply k-means clustering
   tar_target(
     unsup_kmeans_result,
-    unsup_apply_kmeans_until_optimal(unsup_pca_data, max_k = 10)$best_km_result
+    unsup_apply_kmeans(unsup_pca_data, max_k = 10)$best_km_result
   ),
   tar_target(
     unsup_kmeans_sil_score,
-    unsup_apply_kmeans_until_optimal(
+    unsup_apply_kmeans(
       unsup_pca_data,
       max_k = 10
     )$silhouette_scores

@@ -36,7 +36,7 @@ unsup_choose_best_k <- function(silhouette_scores) {
   best_k
 }
 ## Build a function to apply k-means until max_k to find optimal k
-unsup_apply_kmeans_until_optimal <- function(pca_data, max_k) {
+unsup_apply_optimal_kmeans <- function(pca_data, max_k) {
   silhouette_scores <- data.frame(k = integer(), silhouette_score = numeric())
 
   for (k in 2:max_k) {

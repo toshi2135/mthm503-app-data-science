@@ -159,7 +159,7 @@ gap_stat <- clusGap(pca_data, FUN = kmeans, K.max = 10, B = 50)
 plot(gap_stat)
 which.max(gap_stat$Tab[, "gap"])
 gap_df <- as.data.frame(gap_stat$Tab)
-gap_df$k <- 1:nrow(gap_df)
+gap_df$k <- seq_len(nrow(gap_df))
 
 for (i in 1:(nrow(gap_df) - 1)) {
   if (gap_df$gap[i] >= gap_df$gap[i + 1] - gap_df$SE.sim[i + 1]) {
@@ -218,7 +218,7 @@ unsup_choose_best_k <- function(silhouette_scores) {
   best_k
 }
 ## Build a function to apply k-means until max_k to find optimal k
-unsup_apply_kmeans_until_optimal <- function(pca_data, max_k) {
+unsup_apply_optimal_kmeans <- function(pca_data, max_k) {
   silhouette_scores <- data.frame(k = integer(), silhouette_score = numeric())
 
   for (k in 2:max_k) {
@@ -324,7 +324,7 @@ aggregate(. ~ cluster, data = olive_oil[, -1], FUN = mean)
 ### Get the number of k possible
 max_k <- 10
 ### Apply k-means clustering until max_k
-result <- unsup_apply_kmeans_until_optimal(pca_data, max_k)
+result <- unsup_apply_optimal_kmeans(pca_data, max_k)
 best_k <- result[[1]]
 best_km_result <- result[[2]]
 best_silhouette_scores <- result[[3]]
@@ -346,7 +346,8 @@ set.seed(123)
 ## Get the data for DBSCAN
 dbscan_data <- pca_data
 ## Determine min_pts for DBSCAN
-min_pts <- num_components + 1 # minPts = d + 1, where d is the number of dimensions
+min_pts <- num_components + 1
+## minPts = d + 1, where d is the number of dimensions
 ## Determine eps using kNNdistplot
 kNNdistplot(dbscan_data, k = min_pts)
 abline(h = 1.2, col = "red", lty = 2)
@@ -441,7 +442,8 @@ dbscan_sil_score <- dbscan_avg_silhouette
 dbscan_sil_score
 hc_sil_score <- hc_avg_silhouette
 hc_sil_score
-## Create a summary data frame to compare methods using average silhouette scores and number of clusters
+## Create a summary data frame to compare methods
+## Using average silhouette scores and number of clusters
 library(dplyr)
 ## Calculate the number of clusters for each method
 km_clusters <- length(unique(best_km_result$cluster))
