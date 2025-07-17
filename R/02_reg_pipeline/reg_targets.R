@@ -28,10 +28,10 @@ reg_targets <- list(
   tar_target(reg_updated_data, reg_update_data(reg_clean_data)),
   tar_target(reg_glm_updated_model, reg_glm_updated_fit(reg_updated_data)),
   # Modelling using Multinomial GAM
-  tar_target(reg_gam_model_3df, reg_gam_fit(reg_updated_data)$model_gam_3df),
-  tar_target(reg_gam_model_2df, reg_gam_fit(reg_updated_data)$model_gam_2df),
+  tar_target(reg_gam_model_3df, reg_gam_fit_3df(reg_updated_data)),
+  tar_target(reg_gam_model_2df, reg_gam_fit_2df(reg_updated_data)),
   # Modelling using Binomial Regression
-  tar_target(reg_binom_model, reg_binom_fit(reg_updated_data)),
+  tar_target(reg_binom_models, reg_binom_fit(reg_updated_data)),
   # Chi-squared test
   tar_target(reg_chi_squared, reg_chi_squared_test(reg_updated_data)),
   # Modelling using Poisson Regression
@@ -39,18 +39,13 @@ reg_targets <- list(
   # Summarise model results
   tar_target(
     reg_model_summary,
-    bind_rows(
-      tidy(reg_glm_model, conf.int = TRUE, exponentiate = TRUE) %>%
-        mutate(model = "Multinomial GLM"),
-      tidy(reg_glm_updated_model, conf.int = TRUE, exponentiate = TRUE) %>%
-        mutate(model = "Updated Multinomial GLM"),
-      tidy(reg_gam_model_3df, conf.int = TRUE, exponentiate = TRUE) %>%
-        mutate(model = "Multinomial GAM 3df"),
-      tidy(reg_gam_model_2df, conf.int = TRUE, exponentiate = TRUE) %>%
-        mutate(model = "Multinomial GAM 2df"),
-      reg_binom_model %>% mutate(model = "Binomial Regression"),
-      tidy(reg_poisson_model, conf.int = TRUE, exponentiate = TRUE) %>%
-        mutate(model = "Poisson Regression")
+    reg_summarise(
+      glm_model = reg_glm_model,
+      glm_updated_model = reg_glm_updated_model,
+      gam_3df_model = reg_gam_model_3df,
+      gam_2df_model = reg_gam_model_2df,
+      binom_models = reg_binom_models,
+      poission = reg_poisson_model
     )
   )
 )

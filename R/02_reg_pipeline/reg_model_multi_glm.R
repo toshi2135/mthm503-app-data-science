@@ -10,9 +10,6 @@ reg_glm_fit <- function(fire_rescue_clean) {
   )
   ## Check the summary of the model
   summary(model_multi_glm)
-  library(broom)
-  ## Tidy the model output
-  tidy(model_multi_glm, conf.int = TRUE, exponentiate = TRUE)
   ## Check the model coefficients
   coef(model_multi_glm)
   ## Check the model residuals
