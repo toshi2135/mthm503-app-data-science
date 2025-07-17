@@ -536,10 +536,12 @@ rf_summary_final %>%
 # ---
 
 # Create a summary table with all models
-sup_summary <- bind_rows(rf_summary,
-                         log_summary,
-                         rf_summary_weighted,
-                         rf_summary_final) %>%
+sup_summary <- bind_rows(
+  rf_summary,
+  log_summary,
+  rf_summary_weighted,
+  rf_summary_final
+) %>%
   mutate(
     model = factor(
       model,
