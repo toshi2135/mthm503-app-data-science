@@ -533,8 +533,13 @@ rf_summary_final <- tibble(
 )
 rf_summary_final %>%
   knitr::kable(caption = "Final Random Forest Model Summary")
-## Create a summary table with all models including the final model
-bind_rows(rf_summary, log_summary, rf_summary_weighted, rf_summary_final) %>%
+# ---
+
+# Create a summary table with all models
+sup_summary <- bind_rows(rf_summary,
+                         log_summary,
+                         rf_summary_weighted,
+                         rf_summary_final) %>%
   mutate(
     model = factor(
       model,
@@ -547,8 +552,7 @@ bind_rows(rf_summary, log_summary, rf_summary_weighted, rf_summary_final) %>%
     )
   ) %>%
   knitr::kable(
-    caption = "Model Comparison Summary with Final Random Forest Model"
+    caption = "Model Comparison Summary"
   )
-## Save model
-saveRDS(rf_fit_final, here("01_sup_pipeline", "sup_model_rf_final.rds"))
+sup_summary
 # ---
