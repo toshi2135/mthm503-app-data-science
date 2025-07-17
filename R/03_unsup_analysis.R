@@ -67,29 +67,6 @@ olive_oil_scaled <- olive_oil_clean %>%
 str(olive_oil_scaled)
 # ---
 
-
-# Check the heatmap of the clusters
-library(tibble)
-## Prepare data for heatmap
-heatmap_data <- olive_oil %>%
-  group_by(hc_cluster) %>%
-  summarise(across(palmitic:eicosenoic, mean)) %>%
-  column_to_rownames("hc_cluster") %>%
-  as.matrix()
-## Plot the heatmap
-heatmap_plot <- heatmap(
-  heatmap_data,
-  Colv = NA,
-  Rowv = NA,
-  scale = "column",
-  col = colorRampPalette(c("white", "orange", "red"))(100),
-  margins = c(8, 6),
-  main = "Heatmap of Fatty Acid Composition by Cluster"
-)
-## Return the heatmap plot
-heatmap_plot
-# ---
-
 # Reduce PCA dimensions
 library(stats)
 pca_result <- prcomp(olive_oil_scaled, center = TRUE, scale. = TRUE)
