@@ -65,7 +65,9 @@ olive_oil_scaled <- olive_oil_clean %>%
   mutate(across(where(is.numeric), scale))
 ## Check the structure of the scaled data
 str(olive_oil_scaled)
-## Reduce PCA dimensions
+
+# ---
+# Reduce PCA dimensions
 library(stats)
 pca_result <- prcomp(olive_oil_scaled, center = TRUE, scale. = TRUE)
 ## Check the summary of PCA
@@ -73,6 +75,7 @@ summary(pca_result)
 ## Analyse PCA
 pca_var <- pca_result$sdev^2
 pca_var_prop <- pca_var / sum(pca_var)
+cum_var_prop <- cumsum(pca_var_prop)
 ## Plot the scree plot
 plot(
   pca_var_prop,
@@ -122,12 +125,16 @@ ggplot(pca_points, aes(x = PC2, y = PC3)) +
   geom_point(alpha = 0.5, color = "purple") +
   labs(title = "PCA Individuals: PC2 vs PC3", x = "PC2", y = "PC3") +
   theme_minimal()
+target_variance <- 0.9
+## Calculate the number of components needed to reach the target variance
+num_components <- which(cum_var_prop >= target_variance)[1]
+## Reduce PCA dimensions to first 4 components
+pca_data <- as.data.frame(pca_result$x[, 1:num_components])
+pca_data
 # ---
 
 # Apply k-means clustering
 set.seed(123)
-## Use first 4 principal components for clustering
-pca_data <- as.data.frame(pca_result$x[, 1:4])
 wss <- numeric(10)
 ## Compute k-means for k = 1 to 10
 for (k in 1:10) {
@@ -298,8 +305,10 @@ library(dbscan)
 set.seed(123)
 ## Get the data for DBSCAN
 dbscan_data <- pca_data[, 1:4]
+## Determine min_pts for DBSCAN
+min_pts <- 5
 ## Determine eps using kNNdistplot
-kNNdistplot(dbscan_data, k = 4)
+kNNdistplot(dbscan_data, k = min_pts)
 abline(h = 1.2, col = "red", lty = 2)
 title(main = "kNN Distance Plot (k=4) for DBSCAN eps selection")
 ## Apply DBSCAN with eps = 1.2 and minPts = 4
@@ -333,7 +342,7 @@ plot(
 )
 abline(h = 10, col = "red", lty = 2)
 ## Cut tree to get 4 clusters
-pca_data$hc_cluster <- cutree(hc_model, k = 4)
+pca_data$hc_cluster <- cutree(hc_model, k = 5)
 ## Add into olive_oil data
 olive_oil$hc_cluster <- pca_data$hc_cluster
 ## Plot Hierarchical clusters on PC1 vs PC2
@@ -344,6 +353,9 @@ ggplot(pca_data, aes(x = PC1, y = PC2, color = as.factor(hc_cluster))) +
 ## Initial analysis of Hierarchical clusters
 table(pca_data$hc_cluster)
 aggregate(. ~ hc_cluster, data = olive_oil[, -1], FUN = mean)
+## Return the Hierarchical clustering result
+hc_model = hc_model
+hc_model
 # ---
 
 # Check the heatmap of the clusters

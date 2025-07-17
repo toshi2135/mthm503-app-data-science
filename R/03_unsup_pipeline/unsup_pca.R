@@ -1,15 +1,15 @@
 # 03_sup_pipeline/unsup_pca.R
 
 unsup_perform_pca <- function(olive_oil_scaled) {
-  ## Reduce PCA dimensions
+  # Reduce PCA dimensions
   library(stats)
-  library(ggplot2)
   pca_result <- prcomp(olive_oil_scaled, center = TRUE, scale. = TRUE)
   ## Check the summary of PCA
   summary(pca_result)
   ## Analyse PCA
   pca_var <- pca_result$sdev^2
   pca_var_prop <- pca_var / sum(pca_var)
+  cum_var_prop <- cumsum(pca_var_prop)
   ## Plot the scree plot
   plot(
     pca_var_prop,
@@ -59,11 +59,10 @@ unsup_perform_pca <- function(olive_oil_scaled) {
     geom_point(alpha = 0.5, color = "purple") +
     labs(title = "PCA Individuals: PC2 vs PC3", x = "PC2", y = "PC3") +
     theme_minimal()
-  ## Return PCA result
-  list(
-    pca_result = pca_result,
-    pca_var_prop = pca_var_prop,
-    pca_points = pca_points,
-    pca_vars = pca_vars
-  )
+  target_variance <- 0.9
+  ## Calculate the number of components needed to reach the target variance
+  num_components <- which(cum_var_prop >= target_variance)[1]
+  ## Reduce PCA dimensions to first 4 components
+  pca_data <- as.data.frame(pca_result$x[, 1:num_components])
+  pca_data
 }
