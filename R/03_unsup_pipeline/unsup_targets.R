@@ -10,6 +10,7 @@ source(here("R/03_unsup_pipeline", "unsup_load_data.R"))
 source(here("R/03_unsup_pipeline", "unsup_eda.R"))
 source(here("R/03_unsup_pipeline", "unsup_preprocess.R"))
 source(here("R/03_unsup_pipeline", "unsup_pca.R"))
+source(here("R/03_unsup_pipeline", "unsup_model_kmeans.R"))
 
 # Define the targets for the supervised learning pipeline
 unsup_targets <- list(
@@ -22,6 +23,13 @@ unsup_targets <- list(
   tar_target(unsup_clean_data, unsup_preprocess(unsup_raw_data)),
 
   # Perform PCA
-  tar_target(unsup_pca_results, unsup_perform_pca(unsup_clean_data)$pca_results)
+  tar_target(unsup_pca_results, unsup_perform_pca(unsup_clean_data)$pca_results),
   
+  # Apply k-means clustering
+  tar_target(
+    unsup_kmeans_results,
+    unsup_apply_kmeans_until_optimal(unsup_pca_results, max_k = 10)$best_km_result
+  )
+  
+  # Apply DBSCAN clustering
 )
