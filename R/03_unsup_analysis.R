@@ -144,47 +144,126 @@ plot(
   ylab = "Total Within-Cluster Sum of Squares",
   main = "Elbow Method for Optimal k"
 )
-## Choose k = 3 based on elbow plot
-optimal_k <- 3
-## Plot clusters on PCA components
-km_result <- kmeans(pca_data[, 1:4], centers = optimal_k, nstart = 25)
-## Plot clusters on PC1 vs PC2
-pca_data$cluster <- as.factor(km_result$cluster)
-ggplot(pca_data, aes(x = PC1, y = PC2, color = cluster)) +
-  geom_point(alpha = 0.7, size = 2) +
-  labs(title = "K-means (k=3) on PCA (PC1 vs PC2)", x = "PC1", y = "PC2") +
-  theme_minimal() +
-  scale_color_brewer(palette = "Set1")
-## Calculate silhouette score
+## Calculate the optimal k using gap statistic
 library(cluster)
-sil_score_3 <- silhouette(km_result$cluster, dist(pca_data[, 1:4]))
-avg_silhouette <- mean(sil_score_3[, 3])
-cat("Average Silhouette Score for k =", optimal_k, "is", avg_silhouette, "\n")
-## Check the average values of original features per cluster
-olive_oil$cluster <- km_result$cluster
+set.seed(123)
+gap_stat <- clusGap(pca_data[, 1:4], FUN = kmeans, K.max = 10, B = 50)
+plot(gap_stat)
+which.max(gap_stat$Tab[, "gap"])
+gap_df <- as.data.frame(gap_stat$Tab)
+gap_df$k <- 1:nrow(gap_df)
+
+for (i in 1:(nrow(gap_df) - 1)) {
+  if (gap_df$gap[i] >= gap_df$gap[i+1] - gap_df$SE.sim[i+1]) {
+    cat("Using 1-SE rule: choose k =", i, "\n")
+    optimal_k <- i
+    break
+  }
+}
+optimal_k # 3
+
+## Choose k = 3 based on elbow plot
+## Build a function to apply k-means clustering
+unsup_apply_kmeans <- function(pca_data, optimal_k) {
+  set.seed(123)
+  ## Apply k-means clustering
+  km_result <- kmeans(pca_data[, 1:4], centers = optimal_k, nstart = 25)
+  
+  ## Plot clusters on PCA components
+  pca_data$cluster <- as.factor(km_result$cluster)
+  
+  return(km_result)
+}
+## Build a function to plot clusters
+unsup_plot_clusters <- function(pca_data, km_result, optimal_k) {
+  pca_data$cluster <- as.factor(km_result$cluster)
+  
+  library(ggplot2)
+  cluster_plot <- ggplot(pca_data, aes(x = PC1, y = PC2, color = cluster)) +
+    geom_point(alpha = 0.7, size = 2) +
+    labs(title = paste("K-means Clustering with k =", optimal_k), x = "PC1", y = "PC2") +
+    theme_minimal() +
+    scale_color_brewer(palette = "Set1")
+  print(cluster_plot)
+}
+## Build a function to calculate silhouette score
+unsup_calculate_silhouette <- function(km_result, pca_data) {
+  library(cluster)
+  sil_score <- silhouette(km_result$cluster, dist(pca_data[, 1:4]))
+  avg_silhouette <- mean(sil_score[, 3])
+  return(avg_silhouette)
+}
+
+## Build a function to choose the best k based on silhouette score
+unsup_choose_best_k <- function(silhouette_scores) {
+  best_k <- silhouette_scores[which.max(silhouette_scores$silhouette_score), "k"]
+  return(best_k)
+}
+## Set a silhouette scores data frame
+silhouette_scores <- data.frame(k = integer(), silhouette_score = numeric())
+
+# Apply k-means clustering with optimal k
+km_result <- unsup_apply_kmeans(pca_data, optimal_k)
+## Plot clusters on PCA components
+unsup_plot_clusters(pca_data, km_result, optimal_k)
+## Calculate silhouette score
+silhouette_score <- unsup_calculate_silhouette(km_result, pca_data)
+## Add silhouette score to the data frame
+silhouette_scores <- rbind(silhouette_scores, data.frame(k = optimal_k, silhouette_score = silhouette_score))
+## Print silhouette score
+cat("Silhouette Score for k =", optimal_k, ":", silhouette_score, "\n")
+## Aggregate the data by cluster
 aggregate(. ~ cluster, data = olive_oil[, -1], FUN = mean)
+
 ## Try with k=4
-optimal_k_4 <- 4
-km_result_4 <- kmeans(pca_data[, 1:4], centers = optimal_k_4, nstart = 25)
-pca_data$cluster_4 <- as.factor(km_result_4$cluster)
-ggplot(pca_data, aes(x = PC1, y = PC2, color = cluster_4)) +
-  geom_point(alpha = 0.7, size = 2) +
-  labs(title = "K-means (k=4) on PCA (PC1 vs PC2)", x = "PC1", y = "PC2") +
-  theme_minimal() +
-  scale_color_brewer(palette = "Set1")
+optimal_k4 <- optimal_k + 1
+## Apply k-means clustering with k=4
+km_result_k4 <- unsup_apply_kmeans(pca_data, optimal_k4)
+## Plot clusters on PCA components for k=4
+unsup_plot_clusters(pca_data, km_result_k4, optimal_k4)
 ## Calculate silhouette score for k=4
-sil_score_4 <- silhouette(km_result_4$cluster, dist(pca_data[, 1:4]))
-avg_silhouette_4 <- mean(sil_score_4[, 3])
-cat(
-  "Average Silhouette Score for k =",
-  optimal_k_4,
-  "is",
-  avg_silhouette_4,
-  "\n"
-)
-## Check the average values of original features per cluster for k=4
-olive_oil$cluster_4 <- km_result_4$cluster
-aggregate(. ~ cluster_4, data = olive_oil[, -1], FUN = mean)
+silhouette_score_k4 <- unsup_calculate_silhouette(km_result_k5, pca_data)
+## Add silhouette score for k=4 to the data frame
+silhouette_scores <- rbind(silhouette_scores, data.frame(k = optimal_k4, silhouette_score = silhouette_score_k4))
+cat("Silhouette Score for k =", optimal_k4, ":", silhouette_score_k4, "\n")
+## Aggregate the data by cluster for k=4
+olive_oil$cluster_k4 <- km_result_k4$cluster
+aggregate(. ~ cluster_k4, data = olive_oil[, -1], FUN = mean)
+
+## Try with k=5
+optimal_k5 <- optimal_k + 2
+## Apply k-means clustering with k=5
+km_result_k5 <- unsup_apply_kmeans(pca_data, optimal_k5)
+## Plot clusters on PCA components for k=5
+unsup_plot_clusters(pca_data, km_result_k5, optimal_k5)
+## Calculate silhouette score for k=5
+silhouette_score_k5 <- unsup_calculate_silhouette(km_result_k5, pca_data)
+## Add silhouette score for k=5 to the data frame
+silhouette_scores <- rbind(silhouette_scores, data.frame(k = optimal_k5, silhouette_score = silhouette_score_k5))
+cat("Silhouette Score for k =", optimal_k5, ":", silhouette_score_k5, "\n")
+## Aggregate the data by cluster for k=5
+olive_oil$cluster_k5 <- km_result_k5$cluster
+aggregate(. ~ cluster_k5, data = olive_oil[, -1], FUN = mean)
+
+## Try with k=6
+optimal_k6 <- optimal_k + 3
+## Apply k-means clustering with k=6
+km_result_k6 <- unsup_apply_kmeans(pca_data, optimal_k6)
+## Plot clusters on PCA components for k=6
+unsup_plot_clusters(pca_data, km_result_k6, optimal_k6)
+## Calculate silhouette score for k=6
+silhouette_score_k6 <- unsup_calculate_silhouette(km_result_k6, pca_data)
+## Add silhouette score for k=6 to the data frame
+silhouette_scores <- rbind(silhouette_scores, data.frame(k = optimal_k6, silhouette_score = silhouette_score_k6))
+cat("Silhouette Score for k =", optimal_k6, ":", silhouette_score_k6, "\n")
+## Aggregate the data by cluster for k=6
+olive_oil$cluster_k6 <- km_result_k6$cluster
+aggregate(. ~ cluster_k6, data = olive_oil[, -1], FUN = mean)
+
+## Loop through silhouette scores for k=3 to k=6 to find best k
+best_k <- unsup_choose_best_k(silhouette_scores)
+# Print the best k with highest silhouette score
+cat("Best k based on silhouette score:", best_k, "\n")
 # ---
 
 # Apply DBSCAN clustering
