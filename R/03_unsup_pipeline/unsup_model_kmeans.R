@@ -4,7 +4,7 @@
 unsup_apply_kmeans <- function(pca_data, optimal_k) {
   set.seed(123)
   ## Apply k-means clustering
-  km_result <- kmeans(pca_data[, 1:4], centers = optimal_k, nstart = 25)
+  km_result <- kmeans(pca_data, centers = optimal_k, nstart = 25)
   
   ## Plot clusters on PCA components
   pca_data$cluster <- as.factor(km_result$cluster)
@@ -24,7 +24,7 @@ unsup_plot_clusters <- function(pca_data, km_result, optimal_k) {
 ## Build a function to calculate silhouette score
 unsup_calculate_silhouette <- function(km_result, pca_data) {
   library(cluster)
-  sil_score <- silhouette(km_result$cluster, dist(pca_data[, 1:4]))
+  sil_score <- silhouette(km_result$cluster, dist(pca_data))
   avg_silhouette <- mean(sil_score[, 3])
   avg_silhouette
 }
