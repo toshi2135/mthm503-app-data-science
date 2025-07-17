@@ -10,8 +10,6 @@ reg_glm_updated_fit <- function(fire_rescue_clean) {
   )
   ## Check the summary of the upgraded model
   summary(model_multi2)
-  ## Tidy the upgraded model output
-  tidy(model_multi2, conf.int = TRUE, exponentiate = TRUE)
   ## Check the model coefficients
   coef(model_multi2)
   ## Check the model residuals

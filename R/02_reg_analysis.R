@@ -4,7 +4,7 @@
 # Load libraries
 library(DBI)
 library(RPostgres)
-library(stats19)
+library(here)
 # Load load_data function
 source("R/load_data.R")
 # ---
@@ -170,12 +170,11 @@ make_binary_model <- function(df, method) {
     mutate(
       extricated = factor(ifelse(extrication == method, 1, 0), levels = c(0, 1))
     )
-  model <- glm(
+  glm(
     extricated ~ age_band + sex + age_band:sex,
     data = df,
     family = binomial(link = "logit")
   )
-  broom::tidy(model, conf.int = TRUE, exponentiate = TRUE)
 }
 ## Fit the binary model for each extrication method
 methods <- levels(fire_rescue_clean$extrication)
@@ -186,6 +185,13 @@ binary_models <- lapply(methods, function(method) {
 binary_models_df <- do.call(rbind, binary_models)
 ## Check the binary models results
 binary_models_df
+## Assign names to the models
+names(binary_models) <- methods
+## Check the names of the binary models
+names(binary_models)
+## Get the AIC values for the binary models
+binary_aic <- sapply(binary_models, AIC)
+binary_models
 # ---
 
 # Model diagnostics with Chi-squared test
@@ -215,32 +221,4 @@ summary(model_poisson)
 # ---
 
 # Summarise model results
-library(dplyr)
-library(broom)
-
-tidy_vglm <- function(model, model_label = "VGLM") {
-  coefs <- coef(model)
-  se <- sqrt(diag(vcov(model)))
-  tibble(
-    term = names(coefs),
-    estimate = exp(coefs),
-    std.error = se,
-    conf.low = exp(coefs - 1.96 * se),
-    conf.high = exp(coefs + 1.96 * se),
-    model = model_label
-  )
-}
-gam_2df_tidy <- tidy_vglm(model_gam_test_2df, "Multinomial GAM 2df")
-gam_3df_tidy <- tidy_vglm(model_gam_test_3df, "Multinomial GAM 3df")
-
-reg_model_summary <- bind_rows(
-  tidy(model_multi, conf.int = TRUE, exponentiate = TRUE) %>%
-    mutate(model = "Multinomial GLM"),
-  tidy(model_multi2, conf.int = TRUE, exponentiate = TRUE) %>%
-    mutate(model = "Updated Multinomial GLM"),
-  binary_models_df %>% mutate(model = "Binomial Regression"),
-  gam_2df_tidy,
-  gam_3df_tidy
-)
-reg_model_summary
 # ---
