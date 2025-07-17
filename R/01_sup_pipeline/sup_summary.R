@@ -1,6 +1,11 @@
 # 01_sup_pipeline/sup_summary.R
 
-sup_summarise <- function() {
+sup_summarise <- function(
+  rf_summary,
+  log_summary,
+  rf_summary_weighted,
+  rf_summary_final
+) {
   # Create a summary table with all models
   sup_summary <- bind_rows(
     rf_summary,
