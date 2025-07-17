@@ -8,25 +8,25 @@ reg_binom_fit <- function(fire_rescue_clean) {
   make_binary_model <- function(df, method) {
     df <- df %>%
       mutate(
-        extricated = factor(
-          ifelse(extrication == method, 1, 0),
-          levels = c(0, 1)
-        )
+        extricated = factor(ifelse(extrication == method, 1, 0), levels = c(0, 1))
       )
-    model <- glm(
+    glm(
       extricated ~ age_band + sex + age_band:sex,
       data = df,
       family = binomial(link = "logit")
     )
-    broom::tidy(model, conf.int = TRUE, exponentiate = TRUE)
   }
   ## Fit the binary model for each extrication method
   methods <- levels(fire_rescue_clean$extrication)
   binary_models <- lapply(methods, function(method) {
     make_binary_model(fire_rescue_clean, method)
   })
-  ## Combine the results into a single data frame
-  binary_models_df <- do.call(rbind, binary_models)
-  ## Check the binary models results
-  binary_models_df
+  ## Assign names to the models
+  names(binary_models) <- methods
+  ## Check the names of the binary models
+  names(binary_models)
+  ## Get the AIC values for the binary models
+  binary_aic <- sapply(binary_models, AIC)
+  binary_models
+  # ---
 }
