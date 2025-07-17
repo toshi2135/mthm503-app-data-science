@@ -3,6 +3,7 @@
 unsup_perform_pca <- function(olive_oil_scaled) {
   # Reduce PCA dimensions
   library(stats)
+  library(ggplot2)
   pca_result <- prcomp(olive_oil_scaled, center = TRUE, scale. = TRUE)
   ## Check the summary of PCA
   summary(pca_result)
@@ -62,7 +63,15 @@ unsup_perform_pca <- function(olive_oil_scaled) {
   target_variance <- 0.9
   ## Calculate the number of components needed to reach the target variance
   num_components <- which(cum_var_prop >= target_variance)[1]
-  ## Reduce PCA dimensions to first 4 components
+  ## Reduce PCA dimensions to number of components
   pca_data <- as.data.frame(pca_result$x[, 1:num_components])
-  list(num_components, pca_data)
+  colnames(pca_data) <- paste0("PC", 1:num_components)
+  ## Check the PCA data structure
+  str(pca_data)
+  ## Convert pca_data to dataframe
+  pca_data <- as.data.frame(pca_data)
+  ## Return the number of components and the PCA data
+  list(
+    num_components = num_components, 
+    pca_data = pca_data)
 }
