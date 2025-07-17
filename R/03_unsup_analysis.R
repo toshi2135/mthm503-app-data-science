@@ -381,7 +381,7 @@ heatmap_data <- olive_oil %>%
   column_to_rownames("hc_cluster") %>%
   as.matrix()
 ## Plot the heatmap
-heatmap(
+heatmap_plot <- heatmap(
   heatmap_data,
   Colv = NA,
   Rowv = NA,
@@ -390,4 +390,6 @@ heatmap(
   margins = c(8, 6),
   main = "Heatmap of Fatty Acid Composition by Cluster"
 )
+## Return the heatmap plot
+heatmap_plot
 # ---
