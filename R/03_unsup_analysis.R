@@ -8,7 +8,7 @@ library(DBI)
 library(RPostgres)
 library(here)
 # Load load_data function
-source("R/load_data.R")
+source(here("R", "load_data.R"))
 # ---
 # Data querying
 ## Use the .Renviron file to set the environment variables and connect to DB
@@ -468,16 +468,3 @@ results <- data.frame(
   Num_Clusters = c(km_clusters, dbscan_clusters, hc_clusters)
 )
 results
-# Create a summary of the unsupervised analysis
-unsup_summary <- unsup_summarise(
-  pca_data,
-  best_km_result,
-  km_sil_score,
-  dbscan_result,
-  dbscan_sil_score,
-  hc_result,
-  hc_sil_score
-)
-
-## Print the unsupervised analysis summary
-print(unsup_summary)

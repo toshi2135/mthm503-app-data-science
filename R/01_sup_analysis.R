@@ -251,8 +251,6 @@ rf_summary %>%
 vip::vip(rf_fit, num_features = 10) +
   labs(title = "Feature Importance for Random Forest Model") +
   theme_minimal()
-## Save the model
-saveRDS(rf_fit, here("01_sup_pipeline", "sup_model_rf_baseline.rds"))
 # ---
 
 # ---
@@ -328,8 +326,6 @@ bind_rows(rf_summary, log_summary) %>%
     model = factor(model, levels = c("Random Forest", "Logistic Regression"))
   ) %>%
   knitr::kable(caption = "Model Comparison Summary")
-## Save the model
-saveRDS(log_fit, here("01_sup_pipeline", "sup_model_log_baseline.rds"))
 # ---
 
 # ---
@@ -431,8 +427,6 @@ bind_rows(rf_summary, log_summary, rf_summary_weighted) %>%
     )
   ) %>%
   knitr::kable(caption = "Model Comparison Summary with Case Weights")
-## Save model
-saveRDS(rf_fit_weighted, here("01_sup_pipeline", "sup_model_rf_weighted.rds"))
 # ---
 
 # ---
