@@ -16,8 +16,11 @@ This assessment is AI-supported. I acknowledge the following uses of GenAI tools
 [x] I declare that I have referenced the use of GenAI outputs within my assessment, in line with the University’s referencing guidelines.
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, include=FALSE, warning = FALSE, 
-                      message = FALSE, cache = TRUE)
+knitr::opts_chunk$set(echo = FALSE,
+                      include = FALSE,
+                      warning = FALSE,
+                      message = FALSE,
+                      cache = TRUE)
 # Load packages
 library(tidyverse)
 library(tidymodels)
