@@ -82,3 +82,38 @@ To submit your work for formative feedback, you'll use a Pull Request (PR). This
         +--------------------+
 
 ```
+
+---
+
+## My Work
+
+MSc coursework completed by Duc Anh Tuan Nguyen (University of Exeter).
+
+### Repository Structure
+
+```
+├── R/
+│   ├── 01_sup_pipeline/     # Supervised classification pipeline
+│   ├── 02_reg_pipeline/     # Regression pipeline
+│   └── 03_unsup_pipeline/   # Unsupervised learning pipeline
+├── _targets.R               # Targets workflow definition
+├── vignettes/               # Reports and lecture notes
+│   └── lecture_notes/       # Module lecture materials (.qmd)
+├── tests/                   # Unit tests
+├── sql/                     # SQL scripts for data access
+└── renv.lock                # R dependency lockfile
+```
+
+### Pipelines Implemented
+
+- **Supervised classification** — Classification pipeline with ROC analysis and model evaluation
+- **Regression** — Predictive modelling, feature selection, and performance metrics
+- **Unsupervised learning** — Clustering with k-means and exploratory analysis
+
+### Running My Pipelines
+
+```r
+source("init.R")
+renv::restore()
+targets::tar_make()
+```
