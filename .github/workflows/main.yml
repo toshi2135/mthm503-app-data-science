@@ -1,6 +1,10 @@
 name: Run R targets and tests
 
-on: [push, pull_request]
+on: 
+  push: 
+    branch: [main, feature]
+  pull_request:
+    branch: [main]
 
 jobs:
   build:
